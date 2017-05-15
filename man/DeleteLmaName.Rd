@@ -5,7 +5,7 @@
 DeleteLmaName
 }
 \description{
-This function deletes the variables corresponding to names of communities or clusters.
+This function deletes the variables corresponding to names of communities and clusters.
 }
 \usage{
 DeleteLmaName(lma)
@@ -17,7 +17,7 @@ list of three data.tables: clusterList, LWClus and marginals. See function findC
 }
 }
 \value{
-list of three. It contains the three data frames clusterList, LWClus, marginals. From clusterList the deleted variables are com.name, lma.name, from LWCom the deleted variables are lma.name.live, lma.name.work  and from marginals the deleted variable is lma.name.
+list of three. It contains the three data.tables clusterList, LWClus, marginals. From clusterList the deleted variables are com.name, lma.name, from LWCom the deleted variables are lma.name.live, lma.name.work  and from marginals the deleted variable is lma.name.
 }
 \author{
 Daniela Ichim, Luisa Franconi, Michele D'Alo' 

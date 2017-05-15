@@ -5,20 +5,20 @@
 AssignLmaName
 }
 \description{
-This function assigns names to each labour market area given its code. The lma name corresponds to the community name (elementary area or municipality) having the highest number of jobs among all the communities in the lma. If more than one community shares the maximum number of jobs, the first one is taken. In order to differ the community name by the lma with the same name, the community is expressed as  first letter in uppercase and the remaining letters in lowercase, whereas the lma name is all in uppercase.
+Given the names of the original communities (elementary area or municipality) as input, this function assigns the name to each labour market area given its code. The assigned LMA name corresponds to the name of the community having the highest number of jobs (incoming commuters) among all the communities in the corresponding LMA. If more than one community shares the maximum number of jobs, the first one is taken. In order to differ the community name by the LMA with the same name, the community is expressed as  first letter in uppercase and the remaining letters in lowercase, whereas the LMA name is all in uppercase.
 }
 \usage{
 AssignLmaName(LWCom,lma,ComNames)
 }
 \arguments{
   \item{LWCom}{
-input data frame/data.table of commuting data (see for example Sardinia).
+data frame/data.table of commuting data (see for example Sardinia).
 }
 \item{lma}{
 list of three data tables. It is the output of the function findClusters. It contains the three data.tables clusterList, LWClus, marginals.
 }
 \item{ComNames}{
-data frame/data.table containing code, integer representing the id of the community and com.name, character containing the community name.  The Code must be positive.
+data frame/data.table containing two variables: code, integer representing the id of the community and com.name, character containing the community name.  The code must be positive.
 }
 }
 \value{

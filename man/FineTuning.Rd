@@ -13,7 +13,7 @@ FineTuning(dat, out.ini, list.contiguity)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dat}{
-The commuting flows between communities.
+The commuting flows between communities. See function findCluster.
 }
   \item{out.ini}{
 A list of three components: clusterList, LWClus and marginals. See function findClusters. The names should have been assigned.
@@ -23,7 +23,7 @@ list. Each component of the list is a vector indicating the neighbouring labour 
 }
 }
 \details{
-The algorithm (function findCluster) assign communities to clusters based on a rule. There is no check that communities in clusters are contiguous. For this reason the function FineTuning is needed.
+The algorithm (function findCluster) assigns communities to clusters based on a rule. There is no check that communities in clusters are contiguous. For this reason a fine tuning of the initial result is needed (the function FineTuning).
 There is no ordering of the neighbours.
 }
 \value{

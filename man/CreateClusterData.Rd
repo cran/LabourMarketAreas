@@ -20,7 +20,7 @@ A data.table with two columns: Code and residents. Code is the community Id whil
 }
 }
 \details{
-If needed, the fictitious community should be a-priori included in both residents and commuting flows datasets.
+If needed, the fictitious community (see Franconi, D'Alo' and Ichim, 2016 for definition and details) should be a-priori included in both residents and commuting flows datasets.
 }
 \value{
 A list of three components:
@@ -29,8 +29,13 @@ A list of three components:
 \item{marginals: }{a data.table representing the cluster characteristics. The three variables are cluster, amount_live (residents) and amount_work (workers).}
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi and Michele D'Alo'
 }
 \seealso{
 findClusters
+}
+\references{
+[1] Franconi, L., D'Alo', M. and Ichim, D. (2016). Istat Implementation of the  algorithm to develop Labour Market Areas. Available at 
+
+\url{http://www.istat.it/en/files/2016/03/Description-of-the-LabourMarketAreas-algorithm.pdf}.
 }

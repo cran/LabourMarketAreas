@@ -10,18 +10,18 @@ This function builds labour market areas (LMAs) starting from commuting data bet
 \usage{
 findClusters(LWCom, minSZ, minSC, tarSZ, tarSC, 
 verbose = F, sink.output = NULL,trace=NULL,
-PartialClusterData=NULL)
+PartialClusterData=NULL, idcom_type=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{LWCom}{
-data frame/data.table containing the commuting data. Each row corresponds to an observation i.e. a flow and each column corresponds to a variable. The variables are named: "community_live", integer contains the id number of the elementary zone of residence, "community_work", integer, contains the id number of the working community (elementary zone of work), "amount", integer contains the number of employees commuting between the "community_live" and the "community_work" (direction is important). Missing values (NAs) are not allowed. The community id must be positive. Only positive flows are present in the data frame. See Sardinia.   
+data frame/data.table containing the commuting data. Each row corresponds to an observation i.e. a flow and each column corresponds to a variable. The variables are named: "community_live", integer contains the id number of the elementary zone of residence, "community_work", integer, contains the id number of the working community (elementary zone of work), "amount", integer/numeric contains the number of commuters commuting between the "community_live" and the "community_work" (direction is important). Missing values (NAs) are not allowed. The community id must be positive. Only positive flows are present in the data frame. See Sardinia.   
 }
   \item{minSZ}{
 integer specifying the parameter containing the acceptable minimum size of an area in terms of occupied persons. Must be positive.
 }
   \item{minSC}{
-numeric in the interval (0,1) specifying the parameter representing the acceptable minimum self containment of an area. Usually values range from 0.6 to 0.7.
+numeric in the interval (0,1) specifying the parameter representing the acceptable minimum self-containment of an area. Usually values range from 0.6 to 0.7.
 }
   \item{tarSZ}{
 integer specifying the parameter containing the target size of an area in terms of occupied persons. It must be greater than minSZ. 
@@ -44,6 +44,8 @@ character string containing the name of the .txt file that will contain optional
  amount_live and amount_work). Defaults to NULL. 
  
  If it is not NULL, the information related to the process used to derive this structure is not registered in the output of the function). }
+  \item{idcom_type}{character. If not NULL (default value) the identification code of the community is a character and not an integer.}
+ 
 }
 \value{The output of the function is a list of lists with components:
 \item{lma}{
@@ -54,7 +56,7 @@ Please note that in the current version, if the reserve.list is empty, the list 
 
 The three data.tables are:
 
-\bold{clusterList}: data.table containing the allocation of each community to the corresponing Labour Market Areas (LMA). It  includes three variables: \emph{community}, integer containing the id of the community, \emph{cluster}, integer containing the id of the labour market areas, and \emph{residents}, integer containing the number of residents of the corresponding community. 
+\bold{clusterList}: data.table containing the allocation of each community to the corresponing Labour Market Areas (LMA). It  includes three variables: \emph{community}, integer containing the id of the community, \emph{cluster}, integer containing the id of the labour market areas, and \emph{residents}, integer/numeric containing the number of commuters who are residents in the corresponding community. 
 
 \bold{LWClus}: data.table containing the flows between the LMA. It includes three variables:  \emph{cluster_live}, integer representing the id number of the labour market area of residence, \emph{cluster_work}, integer representing the id number of the labour market area of work and \emph{amount}, numeric representing the number of employee commuting from cluster_live to cluster_work (the direction is important).
 
@@ -74,17 +76,18 @@ the value of the validity of such cluster (in character format);
 
 the id of the community assigned to the reserve list;
 
-the community belonging to the cluster being dissolved with the second lowest validity (if available otherwise NULL). } 
-\item{comNotAssigned}{List of lists. Components: integer containing the id of the community in the reserve list that the algorithm was not able to assign to any existing cluster. One list for each of such community. NULL otherwise. } 
-\item{zero.list}{List of four objects: they contain information on communities (elementary areas or municipalities) that could not be processed by the algorithm for various reasons; either the number of residents is 0 or the number of workers/jobs is 0 or the community has no interaction with any other community. In such cases the algorithm eliminates the communities from the initial list and let the user the choice to allocate them at a later stage (see function AssignSingleComToSingleLma).
+the community belonging to the cluster being dissolved with the second lowest 
+external relationships value see Franconi, D'Alo' and Ichim (2016) (if available otherwise NULL). } 
+\item{comNotAssigned}{List. Components: integer containing the id of the community in the reserve list that the algorithm was not able to assign to any existing cluster. One list for each of such community. NULL otherwise. } 
+\item{zero.list}{List of four objects: they contain information on communities (elementary areas or municipalities) that could not be processed by the algorithm for various reasons; either the number of commuters resident in it is 0 or the number of workers/jobs is 0 or the community has no interaction with any other community. In such cases the algorithm eliminates these communities from the initial list and let the user the choice to allocate them at a later stage (see function AssignSingleComToSingleLma).
 
 Communities: integer containing the ids of the communities that could not be processed by the algorithm. 
 
-LWCom: data.table containing the flows involving the above communities. The data.table is in a sense a subset of the initial data.table containing the commuting data. Its variables are community_live, integer containing the id of the community where the occupied persons (employees) live, community_work, integer containing the id of the community where the occupied persons work, amount, numeric, containing the number of occupied persons commuting from community_live to community_work. 
+LWCom: data.table containing the flows involving the above communities. The data.table is in a sense a subset of the initial data.table containing the commuting data. Its variables are community_live, integer containing the id of the community where the commuters live, community_work, integer containing the id of the community where the commuters work, amount, numeric, containing the number of commuters commuting from community_live to community_work. 
 
 Residents, data frame containing the variables Code, integer representing the id of the community and residents, integer representing the number of employees who are resident in the community. 
 
-Workers, data frame containing the variables Code, integer representing the id of the community and workers, integer representing the number of occupied persons who work in the community (jobs).
+Workers, data frame containing the variables Code, integer representing the id of the community and workers, integer/numeric representing the number of commuters working in the community (jobs).
 } 
 \item{communitiesMovements}{data.table with two columns: \emph{community}  and \emph{moves}. 
 
@@ -93,9 +96,15 @@ Workers, data frame containing the variables Code, integer representing the id o
 \emph{moves}: integer. It represents the number of times a community has changed cluster. The movement toward the reserve list is not computed.}
 
 \item{param}{vector containing the parameters used to apply the algorithm, i.e. minSZ, minSC, tarSZ, tarSC.}
+
+\item{idcom_rel}{data.table containing the list of original id community (character) and their corresponding numerical labels created and used inside the algorithm.}
 }
+
 \author{
 Daniela Ichim, Luisa Franconi, Michele D'Alo' and Guido van den Heuvel
+}
+\note{
+Note that everytime that the idcom_type is not NULL in all the output of the function the community identifier will be character and not integer. In anycase in the sink file and in the PartialClusterData component the community identifier will still be integer and not character.
 }
 \seealso{
 LMAwrite

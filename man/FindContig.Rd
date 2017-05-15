@@ -40,7 +40,7 @@ This function should be used to identify the neighbours of the labour market are
 
 If type="poly", there is no special ordering of the contiguous LMAs.
 
-If type="lma", the contiguous LMAs are ordered in decreasing order of residents.
+If type="lma", the contiguous LMAs are ordered in decreasing order of commuters who are resident in the LMA.
 }
 \seealso{
 findClusters, FindIsolated}

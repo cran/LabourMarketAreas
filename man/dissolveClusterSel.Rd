@@ -1,15 +1,15 @@
-\name{dissolveCluster}
-\alias{dissolveCluster}
+\name{dissolveClusterSel}
+\alias{dissolveClusterSel}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-dissolveCluster
+dissolveClusterSel
 }
 \description{
 This function dissolves a selected cluster into its constituent communities. Such communities are given temporary cluster IDs. 
 Then clusterList is updated with the temporary IDs and the number of commuters (LWClus) and the cluster structure (marginals) are recomputed.
 }
 \usage{
-dissolveCluster(clusterData, cluster, LWCom)
+dissolveClusterSel(clusterData, cluster, lwcom)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,8 +19,8 @@ list of 3 data.tables defining all the elements of the current set of clusters.
 \item{cluster}{
 integer: id of the selected cluster to be dissolved into its constituent communities.
 }
-\item{LWCom}{
-data frame/data.table containing the commuting data. 
+\item{lwcom}{
+data frame/data.table containing the selected commuting data. 
 }
 }
 

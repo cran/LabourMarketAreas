@@ -11,7 +11,7 @@ This function identifies the isolated labour market areas and their isolated  po
 \usage{
 FindIsolated(lma,lma_shp=NULL,lma_shp_path,
 lma_shp_name,com_shp=NULL,com_shp_path,
-com_shp_name, id_com, proj4string)
+com_shp_name, id_com)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -44,10 +44,6 @@ character. The file name where the shape files of the communities are saved. Def
 
  \item{id_com}{
 character. The field name of the variable containing the community ID in the communities spatial polygon or in their shape files.
-}
-
-\item{proj4string}{
-character. Geographical details on the projection system used for both shape files (communities and shape files).
 }
 
 }

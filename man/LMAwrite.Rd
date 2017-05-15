@@ -25,3 +25,7 @@ character containing the suffix to be added to the name of the saved output file
 \author{
 Daniela Ichim, Luisa Franconi, Michele D'Alo' and Guido van den Heuvel
 }
+\note{
+This function has to be applied on a labour market partition whose names are not assigned otherwise it
+ will generate an error.
+}
