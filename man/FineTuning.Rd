@@ -16,7 +16,7 @@ FineTuning(dat, out.ini, list.contiguity)
 The commuting flows between communities. See function findCluster.
 }
   \item{out.ini}{
-A list of three components: clusterList, LWClus and marginals. See function findClusters. The names should have been assigned.
+A list of three components: clusterList, LWClus and marginals. See function findClusters. The names should not have been assigned. Use function DeleteLmaName.
 }
   \item{list.contiguity}{
 list. Each component of the list is a vector indicating the neighbouring labour market areas. The names of the list are the communities IDs. 

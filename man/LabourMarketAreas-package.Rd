@@ -12,8 +12,8 @@ Makes Travel-To-Work-Areas from commuting flow data by means of the version of t
 \tabular{ll}{
 Package: \tab LabourMarketAreas\cr
 Type: \tab Package\cr
-Version: \tab 3.0\cr
-Date: \tab 2016-09-22\cr
+Version: \tab 3.1\cr
+Date: \tab 2017-08-11\cr
 License: \tab GPL (>=2)\cr
 }
 
@@ -59,7 +59,8 @@ Maintainer: Luisa Franconi <franconi at istat.it>
 \url{http://www.istat.it/en/files/2016/03/Description-of-the-LabourMarketAreas-algorithm.pdf}.
 
 [5] Franconi, L., Ichim, D. and D'Alo', M. (2017). Labour Market Areas for territorial policies:
-tools for a European approach. Statistical Journal of the IAOS. (forthcoming)
+tools for a European approach. Statistical Journal of the IAOS,
+Vol. 33, No. 3, pp. 585-591. 
 
 [6] Istat (2015). La nuova Geografia dei Sistemi Locali. (in italian). Available at 
 

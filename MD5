@@ -1,4 +1,4 @@
-bc6f9db6360b1a55107f247aeb9665a0 *DESCRIPTION
+43e52315d6b6e66589fdf5ad3dc26056 *DESCRIPTION
 27ed4fd666046d8ef9e0921a8e8c7677 *NAMESPACE
 d4e5ddf35684644cbfb56054d0c3ceb3 *R/LabourMarketAreas.R
 e88793b94a67c559bdebbab68b12bbdf *data/Brindisi.rda
@@ -19,9 +19,9 @@ a11dffd1efb134f574ed787d8f0752f9 *man/CompareLMAsStat.Rd
 47280f50f719eccccfce849da88f894a *man/EqualLmaPartition.Rd
 e5713fceabe6a0db2500df5c60204f7d *man/FindContig.Rd
 5b0f6638a67fd87d6940b8a22fea70be *man/FindIsolated.Rd
-f164c1dfba1a9589c9f5e27b2dd0d2d0 *man/FineTuning.Rd
+431f5beb1bde1e65a06430af8a79541f *man/FineTuning.Rd
 aa8e4acb4e05686811dd4244be55a331 *man/LMAwrite.Rd
-7830cbe0ddb640527f960db8c360c5d1 *man/LabourMarketAreas-package.Rd
+5baed99f54e319601a8f2874e6ec5073 *man/LabourMarketAreas-package.Rd
 8cdec4cd345456f0d5461b04c0e38af3 *man/PlotLmaCommunity.Rd
 f81fe6db8d0fe1bfd0eeb6ecf33e628e *man/Qmodularity.Rd
 ced74db0f04ca678a73222a1d9674178 *man/Sardinia.Rd
