@@ -130,44 +130,73 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
   LIST.COM=data.table(c(LWCom[,community_live],LWCom[,community_work]))
   LIST.COM=unique(LIST.COM)[order(V1)]
   
-  
-  residents=setcolorder(LWCom[,list(residents=sum(amount)),by=list(Code=community_live)],c("residents","Code"))
-  residents=merge(residents,LIST.COM,by.x="Code",by.y="V1",all=T)
-  residents[is.na(residents),residents:=0]
-  workers=setcolorder(LWCom[,list(workers=sum(amount)),by=list(Code=community_work)],c("workers","Code"))
-  workers=merge(workers,LIST.COM,by.x="Code",by.y="V1",all=T)
-  workers[is.na(workers),workers:=0]
-  
-  
-  
-  
-  codes.0<-sort(unique(residents$Code[residents$residents==0]))
-  codes.0<-c(codes.0,sort(unique(workers$Code[workers$workers==0])))
-  temp=LWCom
-  temp=merge(temp,residents,by.x="community_live",by.y="Code",all=T)
-  temp=merge(temp,workers,by.x="community_work",by.y="Code",all=T)
-  temp=temp[amount==residents & amount==workers & community_live==community_work]
-  codes.0=c(codes.0,temp[,community_work])
-  
-  codes.0=sort(codes.0)
+ 
+  codes.0.full=-1
+  criterio.zero=0
   zero.list=list(Communities=NULL,LWCom=NULL,Residents=NULL,
                  Workers=NULL)
-  if(length(codes.0)>=1){
-    print("WARNING:")
-    print("Please check the zero.list component of the output. It is not empty.")
-    print("The following communities will NOT assigned by the algorithm:")
-    print(codes.0)
+  LWCom.origperzero=copy(LWCom)
+  
+  while(criterio.zero==0){
     
-    zero.list$Communities=codes.0
-    zero.list$LWCom=LWCom[community_work%in%codes.0 | community_live%in%codes.0 ,]
-    zero.list$Residents=residents[Code%in%codes.0]
-    zero.list$Workers=workers[Code%in%codes.0]
+    residents=setcolorder(LWCom[,list(residents=sum(amount)),by=list(Code=community_live)],c("residents","Code"))
+    residents=merge(residents,LIST.COM,by.x="Code",by.y="V1",all=T)
+    residents[is.na(residents),residents:=0]
     
-    residents<-residents[!(Code%in%codes.0),]
-    LWCom<-LWCom[!(community_live%in%codes.0),]
-    LWCom<-LWCom[!(community_work%in%codes.0),]
-    LIST.COM<-LIST.COM[!(LIST.COM[,1]%in%codes.0),]
-  }
+    workers=setcolorder(LWCom[,list(workers=sum(amount)),by=list(Code=community_work)],c("workers","Code"))
+    workers=merge(workers,LIST.COM,by.x="Code",by.y="V1",all=T)
+    workers[is.na(workers),workers:=0]
+    
+    ####check number of residents and warning if resident=0
+    ## communities with residents=0 will be written in the warning file, on the screen and in the sink file.
+    
+    codes.0<-sort(unique(residents$Code[residents$residents==0]))
+    codes.0<-unique(c(codes.0,sort(unique(workers$Code[workers$workers==0]))))
+   
+    temp=LWCom
+    temp=merge(temp,residents,by.x="community_live",by.y="Code",all=T)
+    temp=merge(temp,workers,by.x="community_work",by.y="Code",all=T)
+    temp=temp[amount==residents & amount==workers & community_live==community_work]
+    codes.0=unique(c(codes.0,temp[,community_work]))
+    
+    
+    codes.0=sort(codes.0)
+   
+    
+    criterio.zero=1
+    if(length(codes.0)>=1){
+      criterio.zero=0
+      codes.0.full=c(codes.0.full,codes.0)
+      codes.0.full=unique(codes.0.full[codes.0.full>0])
+      print("WARNING:")
+      print("Please check the zero.list component of the output. It is not empty.")
+      print("The following communities will NOT assigned by the algorithm:")
+      print(codes.0.full)
+     
+      
+      
+      residents<-residents[!(Code%in%codes.0.full),]
+      workers<-workers[!(Code%in%codes.0.full),]
+      LWCom<-LWCom[!(community_live%in%codes.0.full),]
+      LWCom<-LWCom[!(community_work%in%codes.0.full),]
+      LIST.COM<-LIST.COM[!(V1%in%codes.0.full),]
+      #end if length(codes.0)>1
+    }
+    
+    #end while criterio.zero
+  } 
+  
+  codes.0.full=codes.0.full[codes.0.full>0]
+  
+  
+  zero.list$Communities=codes.0.full
+  zero.list$LWCom=LWCom.origperzero[community_work%in%codes.0.full | community_live%in%codes.0.full ,]
+  zero.list$Residents=setcolorder(zero.list$LWCom[,list(residents=sum(amount)),by=list(Code=community_live)],c("residents","Code"))
+  zero.list$Workers=setcolorder(zero.list$LWCom[,list(workers=sum(amount)),by=list(Code=community_work)],c("workers","Code"))
+  
+  
+  rm(LWCom.origperzero) ;gc()
+  
   
   fict.community=LIST.COM[,max(V1)*10]
   LWCom=rbind(LWCom,data.table(matrix(rep(fict.community,ncol(LWCom)),1)),use.names=F)
@@ -541,24 +570,36 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
       
     }
     
-    
-    for(j in 1:n.com.cluster2dissolve){
-      
-      
-      index.com.2diss=clusterData$clusterList[community==com.cluster2dissolve[j,community],cluster]
-      clusterData.new <- regroupDissolved.ncom(clusterData,index.com.2diss)[[1]]
-      
-      if(is.list(clusterData.new)){clusterData=clusterData.new}
-      if(is.numeric(clusterData.new)){
-        
-        ComNotAssigned.list[[length(ComNotAssigned.list)+1]]=com.cluster2dissolve[j,community]
-        
+   
+    jj=1
+    while(jj==1){
+      jj=0
+      com.cluster2dissolve<-clusterData$clusterList[cluster<0]
+      n.com.cluster2dissolve2<-nrow(com.cluster2dissolve)
+      for(j in 1:n.com.cluster2dissolve2){
+         index.com.2diss=clusterData$clusterList[community==com.cluster2dissolve[j,community],cluster]
+        clusterData.new <- regroupDissolved.ncom(clusterData,index.com.2diss)[[1]]
+        if(is.list(clusterData.new)){clusterData=clusterData.new
+        jj=1}
       }
+      #end for j ncom.2dissolve
       
+      # end for jj
     }
-    
-    
+    #end if com2dissolve>0
   }
+  
+ ComNotAssigned.list=list(clusterData$clusterList[cluster<0, community])
+  clusterData$clusterList[cluster<0,cluster:=0]
+  clusterData$LWClus[cluster_live<0, cluster_live:=0]
+  clusterData$LWClus[cluster_work<0, cluster_work:=0]
+  clusterData$marginals[cluster<0,cluster:=0]
+ 
+  clusterData$marginals=clusterData$marginals[,list(amount_live=sum(amount_live),amount_work=sum(amount_work)),by=cluster]
+  clusterData$LWClus=clusterData$LWClus[,list(amount=sum(amount)),by=list(cluster_live,cluster_work)]
+ 
+  
+  
   
   
   

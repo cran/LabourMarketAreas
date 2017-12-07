@@ -58,7 +58,8 @@ Daniela Ichim, Luisa Franconi and Michele D'Alo'
 }
 \note{
 This function has to be applied on a labour market partition whose names are assigned. 
-Please note that if the option of providing an output file is activated then the usage of an existing file name in the selected outdir will generate an error.
+Note that some communities present in the shape files may not be available in the lma structure. These missing communities can be found in the zero.list and ComNotAssigned. They could also be structurally missing i.e. could not be present in the initial commuting data.
+Note also that if the option of providing an output file is activated then the usage of an existing file name in the selected outdir will generate an error.
 }
 \seealso{
 findClusters, AssignLmaName

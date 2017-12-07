@@ -52,8 +52,6 @@ character string containing the name of the .txt file that will contain optional
 List of three data.tables: it contains all the information on the partitioning of the initial communities stemming from the input data frame LWCom into a set of labour market areas. Each data frame contains a dimension of the partition: the initial list of communities (municipalities or elementary areas), the relationships between the labour market areas and their structural characteristics. 
 
 
-Please note that in the current version, if the reserve.list is empty, the list lma will still contain a cluster  with ID equal to zero.
-
 The three data.tables are:
 
 \bold{clusterList}: data.table containing the allocation of each community to the corresponing Labour Market Areas (LMA). It  includes three variables: \emph{community}, integer containing the id of the community, \emph{cluster}, integer containing the id of the labour market areas, and \emph{residents}, integer/numeric containing the number of commuters who are residents in the corresponding community. 
@@ -78,7 +76,7 @@ the id of the community assigned to the reserve list;
 
 the community belonging to the cluster being dissolved with the second lowest 
 external relationships value see Franconi, D'Alo' and Ichim (2016) (if available otherwise NULL). } 
-\item{comNotAssigned}{List. Components: integer containing the id of the community in the reserve list that the algorithm was not able to assign to any existing cluster. One list for each of such community. NULL otherwise. } 
+\item{comNotAssigned}{List. Component: integer containing the id of the community in the reserve list that the algorithm was not able to assign to any existing cluster. NULL otherwise. } 
 \item{zero.list}{List of four objects: they contain information on communities (elementary areas or municipalities) that could not be processed by the algorithm for various reasons; either the number of commuters resident in it is 0 or the number of workers/jobs is 0 or the community has no interaction with any other community. In such cases the algorithm eliminates these communities from the initial list and let the user the choice to allocate them at a later stage (see function AssignSingleComToSingleLma).
 
 Communities: integer containing the ids of the communities that could not be processed by the algorithm. 
