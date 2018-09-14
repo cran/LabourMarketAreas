@@ -427,7 +427,7 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
         
         
         
-        
+        if(n.com.cluster2dissolve>1){
         for(ncom in 2:n.com.cluster2dissolve){
           
           leastSelfContainedFULL <- getLeastSelfContained(clusterData$LWClus, clusterData$marginals, minSZ,minSC,tarSZ,tarSC)
@@ -505,6 +505,7 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
           }
           
         }
+        }
         
       }
       
@@ -576,6 +577,7 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
       jj=0
       com.cluster2dissolve<-clusterData$clusterList[cluster<0]
       n.com.cluster2dissolve2<-nrow(com.cluster2dissolve)
+      if(n.com.cluster2dissolve2>0){
       for(j in 1:n.com.cluster2dissolve2){
          index.com.2diss=clusterData$clusterList[community==com.cluster2dissolve[j,community],cluster]
         clusterData.new <- regroupDissolved.ncom(clusterData,index.com.2diss)[[1]]
@@ -583,7 +585,8 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
         jj=1}
       }
       #end for j ncom.2dissolve
-      
+      #end if nrow>1
+      }
       # end for jj
     }
     #end if com2dissolve>0
@@ -650,10 +653,11 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
       out$zero.list$Residents$Code[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$Residents$Code[i]]
       out$zero.list$Workers$Code[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$Workers$Code[i]]
     }
-      
+      if(nrow(out$zero.list$LWCom>0)){
       for(i in 1:nrow(out$zero.list$LWCom)){
         out$zero.list$LWCom$community_live[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$LWCom$community_live[i]]
         out$zero.list$LWCom$community_work[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$LWCom$community_work[i]]
+      }
       }
       }
     }
@@ -1481,13 +1485,14 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
          cex = 0.8)
     
     par(mfrow=c(1,1))
-    
+    if((max(zz@data$x)-1)>0){
     for(kiki in 1:(max(zz@data$x)-1)){
       mimi=readline(paste("LMA ID ",badlma ," please type com ID:     ",sep=""))
       
       cici=readline(paste("LMA ID ",badlma ," please type polygon label:     ",sep=""))
       df.mun.poly=rbind(df.mun.poly,c(mimi,cici))
     }
+      }
     dev.off()
   }
   df.mun.poly=df.mun.poly[-1,]
@@ -1634,7 +1639,7 @@ FineTuning=function(dat,out.ini,list.contiguity){
   
   out.orig=out
   dat.orig=dat
-  
+  if(length(list.contiguity)>0){
   for(i in 1:length(list.contiguity)){
     out=out.orig
     dat=dat.orig
@@ -1710,6 +1715,7 @@ FineTuning=function(dat,out.ini,list.contiguity){
     setnames(marginals,c("LMA","EMP_live", "EMP_work"))
     out.orig$marginals=marginals
     
+  }
   }
   
   setnames(out.orig$clusterList,c("community","cluster","residents"))
@@ -2321,6 +2327,7 @@ Qmodularity<-function(lma)
 
 CompareLMAsStat=function(list.lma,dat){
   setcolorder(dat,c("community_live","community_work","amount"))
+  if(length(list.lma)>0){
   for(i in 1:length(list.lma)){
     if(any(names(list.lma[[i]]$lma$clusterList)!=c("community","cluster","EMP_live"))){
       print(i)
@@ -2339,8 +2346,10 @@ CompareLMAsStat=function(list.lma,dat){
       setnames(list.lma[[i]]$lma$marginals,c("cluster" ,"amount_live" ,"amount_work"))
     }
   }
+  }
   
   stat.mat=matrix(0,1,42)
+  if(length(list.lma)>0){
   for(i in 1:length(list.lma)){
     m=StatClusterData(list.lma[[i]]$lma,list.lma[[i]]$param,
                       threshold = 1000,dat=dat)$StatQuality
@@ -2348,6 +2357,7 @@ CompareLMAsStat=function(list.lma,dat){
     names(m)[1:4]=c("minSZ","minSC","tarSZ","tarSC")
     stat.mat=rbind(stat.mat,m)
     
+  }
   }
   stat.mat=stat.mat[-1,]
   colnames(stat.mat)=names(m)
