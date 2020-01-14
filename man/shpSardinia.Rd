@@ -35,8 +35,10 @@ The object contains 5 slots. The data slot presents the following variables (len
 The data is taken from the shape files (in generalised form) of the whole of Italian municipalities at the 2001 Populalation Census published by Istat: http://www.istat.it/it/archivio/124086 
 }
 \examples{
+\dontrun{
 data(shpSardinia)
 plot(shpSardinia)
+}
 ## maybe str(shpSardinia) ; ...
 }
 \keyword{datasets}

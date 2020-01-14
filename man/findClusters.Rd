@@ -108,8 +108,10 @@ Note that everytime that the idcom_type is not NULL in all the output of the fun
 LMAwrite
 }
 \examples{
+\dontrun{
 out<- findClusters(LWCom=Brindisi, minSZ=1000,minSC=0.6667,tarSZ=10000,tarSC=0.75, 
 verbose=TRUE)
+}
 }
 
 \references{
