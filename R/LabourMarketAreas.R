@@ -58,6 +58,10 @@ utils::globalVariables(c("Code"
                          ,"lma_commuter_percent"
                          ,"Home_Work_Ratio"
                          ,"link"
+                         ,"cinque"
+                         ,"sei"
+                         ,"V5"
+                         ,"V6"
 )
 ,add=T)
 
@@ -648,40 +652,57 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
     
     if(!is.null(out$zero.list)){
       if(length(out$zero.list)>0){
-    for(i in 1:length(out$zero.list$Communities)){
-      out$zero.list$Communities[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$Communities[i]]
-      out$zero.list$Residents$Code[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$Residents$Code[i]]
-      out$zero.list$Workers$Code[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$Workers$Code[i]]
-    }
+        out$zero.list$Communities=merge(data.table(link=out$zero.list$Communities),LIST.COM.alpha,by="link")$community
+        
+        out$zero.list$Residents=merge(out$zero.list$Residents,LIST.COM.alpha,by.x="Code",by.y="link")
+        out$zero.list$Residents[,Code:=NULL]
+        
+        out$zero.list$Workers=merge(out$zero.list$Workers,LIST.COM.alpha,by.x="Code",by.y="link")
+        out$zero.list$Workers[,Code:=NULL]
+        
+        
       if(nrow(out$zero.list$LWCom>0)){
-      for(i in 1:nrow(out$zero.list$LWCom)){
-        out$zero.list$LWCom$community_live[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$LWCom$community_live[i]]
-        out$zero.list$LWCom$community_work[i]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$zero.list$LWCom$community_work[i]]
-      }
+      
+        out$zero.list$LWCom=merge(out$zero.list$LWCom,LIST.COM.alpha,by.x="community_live",by.y="link")
+        out$zero.list$LWCom[,community_live:=NULL]
+        setnames(out$zero.list$LWCom,"community","community_live")
+        
+        out$zero.list$LWCom=merge(out$zero.list$LWCom,LIST.COM.alpha,by.x="community_work",by.y="link")
+        out$zero.list$LWCom[,community_work:=NULL]
+        setnames(out$zero.list$LWCom,"community","community_work")
+        
       }
       }
     }
     
-    
-    if(!is.null(out$comNotAssigned)){
-      if(length(out$comNotAssigned)>0){
-      for(i in 1:length(out$comNotAssigned)){
-        out$comNotAssigned[[i]]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$comNotAssigned[[i]]]
-      }
+    temp=unlist(out$comNotAssigned)
+    length(temp)
+    if(!is.null(temp)){
+      if(length(temp)>0){
+        temp=data.table(link=temp)
+        out$comNotAssigned=list(merge(temp,LIST.COM.alpha,by="link")$community)
       }
     } 
+    rm(temp)
     
-    if(!is.null(out$reserve.list)){
-      if(length(out$reserve.list)>0){
-    for(i in 1:length(out$reserve.list)){
-    if(length(out$reserve.list[[i]])==6){
-      out$reserve.list[[i]][6]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$reserve.list[[i]][6]]
-    }
-      out$reserve.list[[i]][5]=LIST.COM.alpha$community[LIST.COM.alpha$link==out$reserve.list[[i]][5]]
-      
-    }
-      }
-    }
+    temp=lapply(out$reserve.list, length)
+    sei=out$reserve.list[temp==6]
+    cinque=out$reserve.list[temp==5]
+    
+    
+    sei=data.table(matrix(unlist(sei),length(sei),6,byrow=T))
+    sei[,V6:=as.integer(V6)]
+    sei=merge(sei,LIST.COM.alpha,by.x="V6",by.y="link")
+    cinque=data.table(matrix(unlist(cinque),length(cinque),5,byrow=T))
+    cinque[,V5:=as.integer(V5)]
+    cinque=merge(cinque,LIST.COM.alpha,by.x="V5",by.y="link")
+    sei[,V6:=NULL]
+    cinque[,V5:=NULL]
+    
+    cinque=split(cinque,list(cinque$community))
+    sei=split(sei,list(sei$community))
+    
+    out$reserve.list=list(cinque,sei)
     
   out$communitiesMovements=out$communitiesMovements[!is.na(community)]
   
