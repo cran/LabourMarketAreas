@@ -1,12 +1,12 @@
-5767a79128e9886e499ae0d7e30e0392 *DESCRIPTION
+306f1653955e4dcf8f29d96fabd57003 *DESCRIPTION
 27ed4fd666046d8ef9e0921a8e8c7677 *NAMESPACE
 90f179b0f7ddfc2f511e1edae86f657a *R/LabourMarketAreas.R
 e88793b94a67c559bdebbab68b12bbdf *data/Brindisi.rda
 f672fafa4340431b3311d7b73d618dcd *data/Sardinia.rda
 7997b2eb5bacd70f482478b70f413e78 *data/names.Brindisi.rda
 52e3abe3812acf5cd7e0463c6de02e53 *data/names.Sardinia.rda
-c13a5d45635fdaad6a16eb3fdf67ad22 *data/shpBrindisi.rda
-bf7e6602a525c3a2cec1ed5584f6652f *data/shpSardinia.rda
+82a0be6a571e557ed84935616fb8e777 *data/shpBrindisi.rda
+e6bbdc5b5feadb21b816eecc35699634 *data/shpSardinia.rda
 bcf8291c8c160d7e16158b5bb035665f *man/AddStatistics.Rd
 dead0a0d85a60add80145efb6389a490 *man/AssignLmaName.Rd
 ed1773e815c3ccfc4f43ebf980152b28 *man/AssignSingleComToSingleLma.Rd
@@ -21,7 +21,7 @@ e5713fceabe6a0db2500df5c60204f7d *man/FindContig.Rd
 5b0f6638a67fd87d6940b8a22fea70be *man/FindIsolated.Rd
 431f5beb1bde1e65a06430af8a79541f *man/FineTuning.Rd
 aa8e4acb4e05686811dd4244be55a331 *man/LMAwrite.Rd
-fcf93d6664fc90ae4a049675251bf03e *man/LabourMarketAreas-package.Rd
+d6b9a66e1469c856deb48815fd687c1f *man/LabourMarketAreas-package.Rd
 8cdec4cd345456f0d5461b04c0e38af3 *man/PlotLmaCommunity.Rd
 f81fe6db8d0fe1bfd0eeb6ecf33e628e *man/Qmodularity.Rd
 ced74db0f04ca678a73222a1d9674178 *man/Sardinia.Rd

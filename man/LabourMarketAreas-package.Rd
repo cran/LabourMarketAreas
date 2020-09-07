@@ -12,8 +12,8 @@ Makes Travel-To-Work-Areas from commuting flow data by means of the version of t
 \tabular{ll}{
 Package: \tab LabourMarketAreas\cr
 Type: \tab Package\cr
-Version: \tab 3.2.4\cr
-Date: \tab 2020-03-01\cr
+Version: \tab 3.2.5\cr
+Date: \tab 2020-09-05\cr
 License: \tab GPL (>=2)\cr
 }
 
