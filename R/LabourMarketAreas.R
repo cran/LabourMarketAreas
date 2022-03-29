@@ -62,6 +62,17 @@ utils::globalVariables(c("Code"
                          ,"sei"
                          ,"V5"
                          ,"V6"
+                         ,"shape"
+                         ,"shape_ref"
+                         ,"shapi"
+                         ,"shape_ref_ID"
+                         ,"indice"
+                         ,"stats"
+                         ,"corrip"
+                         ,"nome_shapi"
+                         ,"shapi_good"
+                         ,"area"
+                         ,"selected_output"
 )
 ,add=T)
 
@@ -2397,3 +2408,88 @@ AddStatistics=function(statData,comID.file,lma,comID.lma){
   return(x)
 }
 
+LmaSpatialComparison=function(shape,shape_ref){
+  
+  
+  if(!inherits(shape,"SpatialPolygonsDataFrame")){stop("shape must be a spatial object. It must be the output of the LMA creation process.")}
+  if(!inherits(shape_ref,"SpatialPolygonsDataFrame")){stop("shape_ref must be a spatial object.It must be the output of the LMA creation process.")}
+  
+FindMaxIntersection=function(single_shp,many_shp){
+  selected_output=NULL
+  y=NULL
+  x=NULL
+  x=try(gIntersection(single_shp,many_shp,byid=T,id=as.character(many_shp@data$LMA),drop_lower_td =T))
+  if(inherits(x,"SpatialPolygons")){
+  if(!is.null(x)){
+    y=gArea(x,byid=T)
+    selected_output=as.numeric(as.character(names(y)[y==max(y)][1]))
+    #end if is null x 
+  }
+  
+  if(is.null(selected_output) | is.null(y)){
+    return(list(selected_output=-1,area_intersection_max=-1,perc_intersection_shapi=-1,perc_intersection_lma=-1))
+    }
+  if(!is.null(selected_output) & !is.null(y)){
+    return(list(selected_output=selected_output,area_intersection_max=max(y),perc_intersection_shapi=max(y)/sum(y),perc_intersection_lma=max(y)/gArea(many_shp[many_shp@data$LMA==selected_output,])))
+  }
+   
+    #end class x polygon
+  }
+  
+  if(inherits(x,"try-error")){
+    return(list(selected_output=-1,area_intersection_max=-1,perc_intersection_shapi=-1,perc_intersection_lma=-1))
+  }
+  #end function
+}
+
+
+
+  rm(shapi);rm(shapi_good)
+  shapi=spTransform(shape,proj4string(shape_ref))
+  shapi_good=shapi
+  
+  
+  shapi_good@data=data.table(shapi_good@data)
+  area=gArea(shapi_good,byid=T)
+  shapi_good@data$area_shapi=area
+  
+  shape_ref@data=data.table(shape_ref@data)
+  area=gArea(shape_ref,byid=T)
+  shape_ref@data$area_lma_com=area
+
+  
+  stats=rep(0,11)
+  
+  indice=1:nrow(shapi_good@data)
+  for(i in indice){
+    #print(i)
+    nome_shapi=shapi_good@data$LMA[i]
+    corrisp=FindMaxIntersection(shapi_good[i,],shape_ref)
+    
+    stats=rbind(stats,c(nome_shapi
+                        ,as.character(shape_ref@data$LMA[shape_ref@data$LMA==corrisp$selected_output])
+                        ,corrisp$area_intersection
+                        ,as.numeric(as.character(shapi_good@data$area[i]))
+                        ,as.numeric(as.character(shape_ref@data$area_lma_com[shape_ref@data$LMA==corrisp$selected_output]))
+                        ,as.numeric(as.character(shapi_good@data$EMP_live[i]))
+                        ,as.numeric(as.character(shapi_good@data$EMP_work[i]))
+                        ,as.numeric(as.character(shape_ref@data$EMP_live[shape_ref@data$LMA==corrisp$selected_output]))
+                        ,as.numeric(as.character(shape_ref@data$EMP_work[shape_ref@data$LMA==corrisp$selected_output]))
+                        ,corrisp$perc_intersection_shapi
+                        ,corrisp$perc_intersection_lma)
+    )
+  }
+  
+  stats=data.table(stats[-1,])
+  #stats[,shape_ref_ID:=NULL]
+  setnames(stats,c("shape_lma","shape_ref_lma","area_intersection"
+                   ,"shape_area","shape_ref_area",
+                   "shape_EMP_live","shape_EMP_work"
+                   ,"shape_ref_EMP_live","shape_ref_EMP_work"
+                   ,"perc_intersection_shape","perc_intersection_shape_ref"))
+  
+ 
+  return(stats)
+  #end function LmaSpatialComparison
+}
+  
