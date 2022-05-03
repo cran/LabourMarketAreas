@@ -1,6 +1,8 @@
-c1d0b8313ec5d9c14e072d7b0bd8fb25 *DESCRIPTION
-27ed4fd666046d8ef9e0921a8e8c7677 *NAMESPACE
-64e02718222ff23429dd0ad19aea8afd *R/LabourMarketAreas.R
+dad43a8ef2a94d9a75f11a095285a2ad *DESCRIPTION
+aff51cc32a1608236524232d435ad702 *NAMESPACE
+fa0f687201075832e31711768943be21 *R/LabourMarketAreas.R
+839aa282f1e04e5502e6f75e644c820e *R/sysdata.rda
+7b0d5a2917477109e56fdd5a8ad792af *build/vignette.rds
 e88793b94a67c559bdebbab68b12bbdf *data/Brindisi.rda
 f672fafa4340431b3311d7b73d618dcd *data/Sardinia.rda
 fd6fb148ed78ffd1441a26f08edb842a *data/SardiniaGrid.rda
@@ -8,6 +10,9 @@ fd6fb148ed78ffd1441a26f08edb842a *data/SardiniaGrid.rda
 52e3abe3812acf5cd7e0463c6de02e53 *data/names.Sardinia.rda
 82a0be6a571e557ed84935616fb8e777 *data/shpBrindisi.rda
 e6bbdc5b5feadb21b816eecc35699634 *data/shpSardinia.rda
+b367a83fc2cf4addc947d4a30e4eca41 *inst/doc/LabourMarketAreas.R
+52eb379c77f6b5bca2fe33943816cc52 *inst/doc/LabourMarketAreas.Rmd
+c7127eaafe09035232b1c4090f26d28f *inst/doc/LabourMarketAreas.html
 bcf8291c8c160d7e16158b5bb035665f *man/AddStatistics.Rd
 dead0a0d85a60add80145efb6389a490 *man/AssignLmaName.Rd
 ed1773e815c3ccfc4f43ebf980152b28 *man/AssignSingleComToSingleLma.Rd
@@ -22,7 +27,7 @@ e5713fceabe6a0db2500df5c60204f7d *man/FindContig.Rd
 5b0f6638a67fd87d6940b8a22fea70be *man/FindIsolated.Rd
 431f5beb1bde1e65a06430af8a79541f *man/FineTuning.Rd
 aa8e4acb4e05686811dd4244be55a331 *man/LMAwrite.Rd
-61ed9968e7e5ada66228611906229b95 *man/LabourMarketAreas-package.Rd
+ca9c5ff472018f77f753871371684aad *man/LabourMarketAreas-package.Rd
 dbe862cdfa26eb0d6e6e9d4d5af14ee4 *man/LmaSpatialComparison.Rd
 8cdec4cd345456f0d5461b04c0e38af3 *man/PlotLmaCommunity.Rd
 f81fe6db8d0fe1bfd0eeb6ecf33e628e *man/Qmodularity.Rd
@@ -37,6 +42,7 @@ a4dc90c5a98f0991cb3953e6dc566a1f *man/determineRegroupList.Rd
 50ee698d3e335ae1a15c29cf1022b077 *man/dissolveClusterSel.Rd
 a30c002106fc2c7786b540c15d03a60f *man/findClusters.Rd
 630f19637e87e4ba0be2093e1fe548b6 *man/getLeastSelfContained.Rd
+3fe41f8c2afd35f62e723de35c3451ac *man/iso.Rd
 11283322c8e7e7fdefd5a7dec65f18d6 *man/mergeCluster.Rd
 dc3c3bb20d654922a5e80be89c1d523d *man/names.Brindisi.Rd
 6787c3c4843c06a7607a419715c7b2d0 *man/names.Sardinia.Rd
@@ -44,3 +50,4 @@ eec2211e339848398754b411a91aea81 *man/regroupDissolved.Rd
 9371bfa490e6f074103b198319dfab6f *man/regroupDissolved.ncom.Rd
 adbdd6f6b268c78714400a26a46c30ad *man/shpBrindisi.Rd
 17809eae80dca7a19913801abf03c6ab *man/shpSardinia.Rd
+52eb379c77f6b5bca2fe33943816cc52 *vignettes/LabourMarketAreas.Rmd

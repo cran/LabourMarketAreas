@@ -1,0 +1,843 @@
+---
+title: "Introduction to labour market areas delineation and processing through the R package LabourMarketAreas"
+author: "Luisa Franconi, Daniela Ichim"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+always_allow_html: true
+vignette: >
+  %\VignetteIndexEntry{LabourMarketAreas}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center',
+  fig.width = 7,
+  comment = "#>",
+  root.dir="/tmp"
+)
+suppressPackageStartupMessages(library(sp))
+suppressMessages(library(sp))
+suppressMessages(library(data.table))
+
+```
+
+```{r,echo=FALSE}
+suppressPackageStartupMessages(library(sp))
+suppressMessages(library(sp))
+options(warn=-1)
+options(digits=2)
+options(rmarkdown.html_vignette.check_title=FALSE)
+options(big.mark="")
+library(data.table)
+library(tmap)
+tmap_mode("view")
+```
+
+Labour market areas (LMAs) are sub-regional geographical areas where the
+bulk of the labour force lives and works, and where establishments can
+find the main part of the labour force necessary to occupy the offered
+jobs. They are functional regions that stem from the aggregation of
+elementary geographical units (municipalities, census output areas,
+etc.) on the basis of their level of spatial interaction measured by
+commuting to work flows through quantitative methods. The guiding idea
+is to maximise the flow inside the area (internal cohesion) and minimise
+it outside (external separation).
+
+The R package
+<mark style="background-color: lightgray">LabourMarketAreas</mark>
+includes a series of functions useful for the treatment of LMAs. The package contains tools for
+the creation, operationalisation, manipulation and dissemination of
+labour market areas. This vignette briefly illustrates the main stages
+of the labour market areas delimitation process. Users are invited to
+explore the other functions devoted to LMA management.
+
+<br><br><br>
+
+# 1. Introduction
+
+LMAs are clusters comprising two or more initial elementary units (communities) linked by commuting patterns between them. The key characteristics of LMAs is self-containment of commuting flows. An algorithm has been implemented in the package in order to create such clusters.
+
+The algorithm is an iterative agglomerative one that depends on a set of parameters. Such parameters set the level of desired self-containment and size of LMAs. It starts by considering each community as a cluster that is checked against a set of conditions to see whether it can be considered an LMA. At each iteration clusters that are not fit for the purpose are disaggregated and a single community inside the cluster is chosen to be attached to a new cluster in order to improve the set of given conditions. The final solution is obtained when the whole set of clusters satisfies the given conditions. The main ingredient of the algorithm are: 1. a set of parameters, 2. a function to decide when a cluster is “fit for the purpose”, 3. a measure to choose the cluster to be assigned to a selected community and 4. the steps of the iterative procedure.
+
+A little explanation on these components is the following:
+
+1.	The set of parameters, chosen by the user, identifies thresholds on the dimensions of the cluster to be created. The fist dimension is the size of the LMA, in terms of number of occupied residents; the second is  the level of self-containment required in order for a cluster to be considered an LMA. To allow flexibility a trade-off is suggested between these two dimensions see Franconi et al. (2017) for further details;
+
+
+2. A condition of validity states, through a quantification of a function based on the values of the parameters, whether a cluster of elementary units is an LMA;
+
+
+3. A measure of cohesion between a community and all the clusters with whom such community has relationships; such measure identifies the cluster where the community will to be assigned: the one where the maximum is attained. 
+
+
+4. A reserve list (Coombes, 2014) comprising of communities which cannot be clearly assigned during the iterations of the algorithm;
+
+
+5. An iterative procedure that selects a community at a time, aggregates it to a different cluster, and defines the order and the operations to be implemented.
+
+
+The R object *lma* is the main actor of the package. The description of this object necessarily needs information on all its dimensions: the initial units comprising it, the flows inward and outward and the summary of its size in terms of employees that reside and/or work there. 
+The description of the process to delineate and produce a graphical representation of the LMA starts with the necessary input data, presented in Section 2. 
+The core function of the package 
+<mark style="background-color: lightgray">LabourMarketAreas</mark> 
+- comprising all the elements listed above - is described in Section 3. The output of the main function provides information on all the dimensions of the LMAs, a recap on the parameters used and details of the process.  Section 4 describe the functions for the production of maps. 
+The quality assessment of the clusters is of extreme importance and functions devoted to its investigation are presented in Section 5. As the algorithm does not constrain on contiguity of comprising elements of each LMA, functions are present to check on fulfilment of such property and, whether needed, correct the composition; Section 6 presents this fine tuning stage of the process. 
+In order to guide on the choice of initial parameters, Section 7  shows how to compare different partitions using implemented package functions. The vignette ends with examples of data aggregation and maps preparation through the package. 
+
+ 
+
+<br><br><br>
+
+# 2. Input data
+
+There are two main data sets needed for the delimitation of the labour
+market areas: commuting flows and the shape files of the initial
+territorial partition (elementary geographical units).
+
+## 2.1 Commuting flows
+
+Labour market areas are aggregations of basic territorial units. The
+latter are called communities.
+
+Labour market areas are built by aggregating communities; the
+aggregation process is driven by the commuting flows between
+communities. Thus, the commuting flows matrix is the main input for the delineation of the labour
+market areas.
+
+In the 
+<mark style="background-color: lightgray">LabourMarketAreas</mark> package the
+commuting flows matrix is a data.table with three columns: the origin elementary geographical unit
+identifier, the destination identifier and the amount of commuting flow
+between origin and destination. The identifiers of the origin and
+the destination may be either numeric or character, but the amount is
+constrained to be a numeric variable.
+
+The examples in this vignette are based on the travel-to-work commuting
+flows between the  municipalities of the Italian NUTS3 of Brindisi. The data stems from the 2001
+Italian Population Census.
+
+```{r eval=TRUE}
+library(LabourMarketAreas)
+data(Brindisi)
+#?Brindisi
+head(Brindisi)
+```
+
+## 2.2 Shape files of the communities
+
+In order to visualize the obtained aggregations, the shape files of the
+initial territorial units are required. This object should be loaded
+as a SpatialPolygonsDataFrame (package **sp**).
+
+Besides the commuting flows between Brindisi municipalities, the
+package
+<mark style="background-color: lightgray">LabourMarketAreas</mark>
+includes also the shape file of this Italian region.
+
+```{r eval=TRUE,fig.align='center'}
+#?shpBrindisi
+data("shpBrindisi")
+tm_shape(shpBrindisi)+tm_borders("black",alpha=0.5)+tm_fill("gray",alpha=0.2)
+```
+
+<br><br><br>
+
+If available, the names/labels of the initial communities may be supplied to facilitate identification of the derived LMA partition. Although it is not a mandatory input for
+the LMA delimitation, the data.table containing the labels should
+have the following structure: the community identifiers *Code* and their labels *com.name*:
+
+```{r eval=TRUE}
+data("names.Brindisi")
+head(names.Brindisi)
+```
+
+<br><br>
+
+Please make sure that the initial communities' identifiers in the travel-to-work commuting matrix coincides with those present in the shape files and in the 
+data.table containing the labels.
+
+The initial communities listed in the travel-to-work commuting matrix
+should be amongst the communities registered in the shape file and label
+data.frame.
+
+None of the communities should be identified or labeled by "0".
+
+<br><br><br>
+
+# 3. Delineation of Labour Market Areas
+
+The main function of the package
+<mark style="background-color: lightgray">LabourMarketAreas</mark> is
+**findClusters**. It implements the algorithm that iteratively aggregates
+the initial communities in order to fulfill the conditions set by the initial parameters.
+
+```{r eval=F}
+?findClusters
+```
+
+By means of the travel-to-work commuting flows contained in the $LWCom$ data.table, the algorithm iteratively
+aggregates the initial communities until convergence is reached. The
+algorithm creates a partition of the territory such that all areas
+satisfy the so called validity rule (convergence criteria). Such rule
+depends on area size, the number of commuters living in the area, and on
+self-containment, the proportion of the commuters not crossing area
+borders. In particular, the validity rule sets a trade-off between area
+size and its level of self-containment. The rationale is the smaller the
+area the higher the self-containment to be considered adequate. Lower
+self-containment values are instead acceptable for larger areas. These
+cut-off levels are defined by users through four parameters: *minSZ*,
+*tarSZ*, *minSC* and *tarSC*.
+
+-   *minSZ* is the area acceptable minimum size
+
+-   *tarSZ* is the size for an area to be considered large
+
+-   *minSC* is the acceptable minimum level of selfcontainment for large
+    areas
+
+-   *tarSC* is the acceptable minimum level of self-containment for
+    small areas.
+
+<br><br>
+
+The basic usage of the **findClusters** function is as follows:
+
+```{r eval=T}
+out = findClusters(LWCom=Brindisi, minSZ=1000,minSC=0.6667,tarSZ=10000,tarSC=0.75, 
+verbose=FALSE)
+```
+
+There are several additional arguments that render the function
+**findClusters** more flexible:
+
+-   *idcom_type* may be used for switching from numeric to character
+    type of the codes of the communities.
+
+-   *PartialClusterData* may be used to start the aggregation of the
+    communities from a given setting.
+
+-   *verbose* and *sink.output* may be used to display some convergence
+    information at each iteration.
+
+-   *trace* may be used to save some intermediate results.
+
+<br><br>
+
+The output of the **findClusters** is a list with several components
+describing the derived partition, reserve list, the communities not
+assigned to any LMA and the isolated communities.
+
+```{r eval=T}
+str(out)
+```
+
+The *lma* component of the output is a list of three data.table objects:
+
+1.  *clusterList* - it contains the allocation of each community to the
+    corresponing labour market area together with the number of
+    residents in each initial territorial unit
+
+```{r eval=T}
+#str(out$lma)
+head(out$lma$clusterList)
+```
+
+2.  *LWClus* - it contains the commuting flows between the labour market
+    areas
+
+```{r eval=T}
+head(out$lma$LWClus)
+```
+
+3.  *marginals* - it contains the main characteristics of the labour
+    market areas:
+
+-   *amount_live* = number of employees who are residents in the LMA
+-   *amount_work* = number of employees working in LMA regardless of
+    where they live
+
+```{r eval=T}
+head(out$lma$marginals)
+```
+
+<br>
+
+The *reserve.list* is a list of particular communities. During the
+iterations, the algorithm tries to assign communities to their dominant
+cluster. If, for a particular community *C*, there is no dominant
+cluster or if the validity of the dominant cluster does not improve
+after the assignment, the dominant cluster is not modified. In these
+situations, the community *C* is assigned to the reserve list.
+
+```{r eval=T}
+str(out$reserve.list)
+```
+
+<br>
+
+As the reserve list is not emptied during the iterations, once the
+convergence is achieved (each cluster satisfies the validity rule), the
+function **findClusters** outputs also an object *lma.before0.*
+
+All the clusters in *lma.before0* satisfy the validity rule, except the
+cluster identified by "0". The latter cluster represents the reserve
+list created during the iterations of the algorithm. The communities
+belonging to the reserve list may be investigated through the data.table
+clusterList.
+
+```{r eval=T}
+#str(out$lma.before0)
+out$lma.before0$clusterList[cluster==0]
+```
+
+*lma* and *lma.before0* share the same structure. Actually, *lma* is
+derived from *lma.before0* simply by assigning each community in the
+reserve list (cluster "0") to other clusters in *lma.before0*. This
+assignment is driven by the maximisation of the linkages between
+communities and clusters. For this final assignment of the communities
+from the reserve list, the validity of the obtained clusters is no more
+checked. Consequently, clusters in *lma.before0* satisfy the validity
+rule, while some clusters in *lma* may not satisfy the same rule.
+Furthermore, the *lma* component of the output does not include any
+cluster identified by "0".
+
+<br>
+
+The *zero.list* contains information on communities that could not be
+processed by the algorithm for various reasons; either the number of
+commuters resident in it equals zero or the number of workers/jobs is
+zero or the community has no interaction with any other community.
+
+<br><br><br>
+
+# 4. Shape files of the derived Labour Market Areas
+
+Once the labour market areas are delimited by means of the
+**findClusters** function, the LMAs are labeled according to the name of
+the community having the highest number of jobs (incoming commuters)
+among all the communities comprising the LMA. The function
+**AssignLmaName** changes the structure of an LMA partition. Firstly,
+the *cluster* columns (in *clusterList*, *LWClus* and *marginals*) are
+re-named into *LMA,* but they maintain their meaning, i.e. LMA
+identification code. The columns *residents* are re-named into *EMP_live,* while the
+columns *workers* are re-named into *EMP_work*. In the *LWClus*
+component, the commuting flows are re-named from *amount* into
+*commuters*. Secondly, the names of the communities are included in the 
+*clusterList* component: the column *com.name* is added. Thirdly, the *clusterList*, *LWClus* and *marginals* components include the LMA names, columns starting with the prefix *Lma.name*.
+
+```{r eval=T}
+lma_name=AssignLmaName(Brindisi,out$lma,names.Brindisi)
+head(lma_name$clusterList)
+#head(lma_name$LWClus)
+#head(lma_name$marginals)
+```
+
+<br><br>
+
+Starting from the initial communities shape files, the function
+**CreateLMAShape** derives the shape files of the corresponding labour market
+areas. The output of this function includes the labour market areas
+shape files and the lists of communities belonging either to commuting
+flows or the communities shape files.
+
+
+```{r eval=T}
+out_shp=CreateLMAShape(lma=lma_name,
+                  comIDs="community",
+                  lmaIDs="LMA",
+                  shp_com=shpBrindisi,
+                  id_shp_com="PRO_COM")
+# str(shp)
+```
+
+Obviously, if a community is registered in the commuting flows matrix,
+but not in the communities shape files, the completeness of the polygons
+should be checked. On the contrary, it might be possible for a community
+to be registered in the communities shape files, but not in the LMA
+partition. This is especially the case of the *zero.list* communities,
+i.e. those communities having no links with other communities. Such
+communities should be manually treated before generating the LMA shape
+files. For example, additional clusters could be created for each such
+isolated community.
+
+```{r eval=T}
+# check whether there are communities registered in lma but not in the communities shape file
+out_shp$comID.in.LMA.not.in.SHP
+#check whether there are communities registered in the communities shape file but not in the lma
+out_shp$comID.in.SHP.not.in.LMA
+```
+
+In order to graphically visualise the shape of the labour market areas,
+the *shp_lma* component of the output of **CreateLMAShape** can be
+used:
+
+```{r eval=T,fig.align='center'}
+# plot(shp)
+# or
+
+tm_shape(shpBrindisi)+tm_borders("black",alpha=0.5)+tm_fill("gray",alpha=0.2)+tm_shape(out_shp$shp_lma)+tm_borders("red",alpha=0.5)+tm_fill("blue",alpha=0.2)
+```
+
+<br><br><br>
+
+# 5. Quality assessment
+
+The package
+<mark style="background-color: lightgray">LabourMarketAreas</mark>
+includes both statistical and spatial tools for quality evaluation.
+
+The function **StatClusterData** computes statistics on the LMA
+partition, its flows and quality indicators, e.g. statistics on internal
+cohesion flows, home-work ratio, $Q$-modularity, etc. Before using this
+function, the LMA names should be deleted from the corresponding R
+object, if any.
+
+The function **StatReserveList** computes statistics on the reserve
+list. It summarizes the typologies of the communities, their validities,
+statistics on their original clusters, etc.
+
+```{r eval=T}
+lma_no_name=DeleteLmaName(lma_name)
+#?StatClusterData
+mystat=StatClusterData(lma_no_name,out$param,1,Brindisi)
+# mystat$marginals
+# mystat$StatFlows
+# mystat$StatQuality
+
+#?StatReserveList
+stat_reserve=StatReserveList(out$reserve.list,Brindisi)
+
+```
+
+\vspace{30pt}
+
+<br><br><br>
+
+# 6. Fine tuning
+
+The algorithm implemented in the **findClusters** function esclusively
+takes into account the travel-to-work commuting flows. Otherwise stated,
+the spatial contiguity of the communities is not at all considered by
+the greedy algorithm. Consequently, the spatial extension of some labour
+market areas might include isolated polygons. The latter are defined as
+those polygons having no contiguity relationship with other polygons
+belonging to the same LMA. Moreover, it might be that some LMAs contain
+a single elementary territorial unit which could be intended as an unwanted feature. The functions **FindIsolated** and
+**FindContig** help users in identifying these critical LMAs.
+
+```{r eval=F}
+#?FindIsolated
+iso=FindIsolated(lma=lma_name,
+                 lma_shp=out_shp$shp_lma,
+                 com_shp=shpBrindisi,
+                 id_com="PRO_COM"
+                )
+
+```
+
+```{r eval=T,echo=F}
+setwd("..")
+setwd("R")
+load("sysdata.rda")
+setwd("..")
+setwd("vignettes")
+```
+
+The function **FindIsolated** is an interactive one. It plots in a new
+window containing the isolated polygons together with the communities of the
+corresponding LMA:
+
+\newpage
+
+```{r eval=T,echo=F,warning=FALSE,message=FALSE,cache.comments=FALSE,fig.align='center'}
+
+lma_shp_path = NULL
+lma_shp_name = NULL
+com_shp_path = NULL
+com_shp_name = NULL
+  
+  lma=lma_name
+  lma_shp=out_shp$shp_lma
+  com_shp=shpBrindisi
+  id_com="PRO_COM"
+  
+      shp = lma_shp
+      proj4string = lma_shp@proj4string
+      comuni91 = com_shp
+      proj4string = com_shp@proj4string
+    
+  kiki = grep(id_com, names(comuni91@data))
+
+  
+  comuni91 <- sp::merge(comuni91, data.frame(lma$clusterList), 
+                        by.x = kiki, by.y = "community")
+  nbpolygsll <- spdep::poly2nb(shp, row.names = shp@data$LMA, 
+                               queen = TRUE)
+  Wsll = spdep::nb2mat(nbpolygsll, style = "B", zero.policy = TRUE)
+  #rownames(Wsll[rowSums(Wsll) == 0, ])
+  colnames(Wsll) = shp@data$LMA
+  nolinksll = shp@data$LMA[shp@data$LMA%in%rownames(Wsll)[rowSums(Wsll) ==      0]]
+  nolinksllname = shp@data$lma.name[shp@data$LMA %in% rownames(Wsll)[rowSums(Wsll) ==  0]]
+  shp = shp[!shp$LMA %in% nolinksll, ]
+  setDT(lma$clusterList)
+  lma$clusterList = lma$clusterList[!(lma$clusterList$LMA %in% 
+                                        nolinksll), ]
+  lma$LWCom = lma$LWCom[!(lma$LWCom$LMA_live %in% nolinksll), 
+  ]
+  lma$LWCom = lma$LWCom[!(lma$LWCom$LMA_work %in% nolinksll), 
+  ]
+  lma$marginals = lma$marginals[!(lma$marginals$LMA %in% nolinksll), 
+  ]
+  lma$clusterList[, `:=`(Ncom, .N), by = LMA]
+  badsll = lma$clusterList[Ncom == 1, ]
+  setorder(badsll, -EMP_live)
+  badsll = badsll$LMA
+  badsllname = "0"
+  if (length(badsll) > 0) {
+    for (kiki in 1:length(badsll)) {
+      badsllname = c(badsllname, as.character(shp@data$lma.name[shp$LMA == 
+                                                                  badsll[kiki]]))
+    }
+  }
+  badsllname = badsllname[-1]
+  d = disaggregate(shp)
+  d@data = data.table(d@data)
+  d@data[, `:=`(x, .N), by = lma.name]
+  d@data[x >= 2, `:=`(ID_PiecesLMA, paste(as.character(LMA), 
+                                          1:max(x), sep = "_")), by = lma.name]
+  d@data[is.na(ID_PiecesLMA), `:=`(ID_PiecesLMA, as.character(LMA))]
+  sll.shp.nb <- spdep::poly2nb(d, row.names = d@data$ID_PiecesLMA, 
+                               queen = TRUE)
+  W = spdep::nb2mat(sll.shp.nb, style = "B", zero.policy = TRUE)
+  #rownames(W[rowSums(W) == 0, ])
+  colnames(W) = d@data$ID_PiecesLMA
+  nolinkpolig = d@data$ID_PiecesLMA[d@data$ID_PiecesLMA %in% 
+                                      rownames(W)[rowSums(W) == 0]]
+  nolinkpoligname = d@data$lma.name[d@data$ID_PiecesLMA %in% 
+                                      rownames(W)[rowSums(W) == 0]]
+  badlmalist = sort(unique(d@data$LMA[d@data$x > 1]))
+  zeris = c(0, 0)
+  df.mun.poly = data.frame(t(zeris))
+  colnames(df.mun.poly) = c("community", "Polygon")
+  #rm(zeris)
+  indice.ident = grep(id_com, names(comuni91@data))
+  badlma=badlmalist[1]
+  
+  
+   zz = d[d$LMA == badlma, ]
+    zz@data$colore=c("yellow","red")
+    # plot(zz, main = paste("polygons", unique(zz@data$lma.name), 
+    #                       sep = " "), col = c("yellow", "red", "cyan", "orange"), 
+    #      col.main = "red")
+    # centroids <- coordinates(zz)
+    # text(centroids, label = zz@data$ID_PiecesLMA, cex = 0.8)
+    
+    mappa1=tm_shape(zz)+tm_borders("gray")+tm_fill(col="colore")+tm_text("ID_PiecesLMA")
+    mappa2=tm_shape(comuni91[comuni91$LMA == badlma, ])+tm_borders("black")+tm_fill("gray",alpha=0.2)+tm_text("PRO_COM")
+    tmap_arrange(mappa1,mappa2,ncol=2)
+```
+
+<br><br><br>
+
+The isolated polygons have a yellow background. The user should identify
+the association between the isolated polygon and a new community. In
+this example, the user should type in the **R console** the community
+and polygon ID, e.g 74015 and 1_1, respectively. The function
+**FindIsolated** loops for all isolated polygons. At the end of the
+manual introduction of the associations between communities and
+polygons, the user is also asked to modify or confirm his choice (y/n).
+Once the association table is confirmed, the interactivity stops.
+
+The output of the **FindIsolated** function is a list with two quite
+similar components, one dedicated to particular LMAs and the other
+containing information about particular polygons. Depending on the case
+study, these components could be further manipulated and updated in
+order to reflect the expert choices. Then, these components could be
+further used to tune the isolated elements:
+
+1.  *isolated.lma*
+
+-   *contig.matrix.lma* - the LMA contiguity matrix of the given LMA
+    partition
+-   *lma.unique* - these are the LMAs having a unique community
+-   *lma.nolink* - the LMAs with no link w.r.t. other LMAs
+
+2.  *isolated.poly*
+
+-   *contig.matrix.poly* - the contiguity matrix of the polygons of the
+    given LMA partition
+-   *poly.com.linkage* - association between polygons and communities
+    (the one interactively confirmed by the user)
+-   *poly.nolink* - the identifiers of the polygons without links
+
+Once the isolated polygons are identified, the function **FindContig**
+should be used to identify the contiguos polygons. Depending on the
+situation, the function **FindContig** could be used even twice, once
+for LMAs and once for polygons.
+
+Firstly, the function **FindContig** should be used for LMAs with an
+unique community. For such LMAs, the output is a list of contiguous
+LMAs. The contiguous LMAs are ordered in decreasing order of commuters
+who are resident in the given LMA (with unique community).
+
+```{r eval=T}
+conti.lma=FindContig(type = "lma", 
+                     lma=out$lma, 
+                     contig.matrix=iso$isolated.lma$contig.matrix.lma, 
+                     isolated=iso$isolated.lma$lma.unique$lma.unique.ID)
+
+conti.lma$list.contig.lma
+```
+
+Secondly, the function **FindContig** below should be used for isolated
+polygons. For such polygons, the list containing the IDs of the
+contiguous labour market areas of each community (polygon) is
+identified.
+
+```{r eval=T}
+conti.poly=FindContig(type = "poly", 
+                      lma=out$lma, 
+                      contig.matrix=iso$isolated.poly$contig.matrix.poly, 
+                      isolated=iso$isolated.poly$poly.com.linkage)
+
+
+conti.poly$list.contig.poly
+conti.poly$com_no.LMA.neigh
+
+```
+
+In order to be further processed, only the non-empty elements should be
+selected.
+
+```{r eval=T}
+conti.poly$list.contig.poly=
+  conti.poly$list.contig.poly[!is.na(conti.poly$list.contig.poly)]
+```
+
+Finally, the LMAs and polygons tunning could be performed after deleting
+the names of the LMAs. Of course, the LMA names could be re-attached at
+the end of the process.
+
+```{r eval=T}
+out$lma=DeleteLmaName(out$lma)
+lma.tuned=FineTuning(dat=Brindisi, 
+                     out.ini=out$lma, 
+                     list.contiguity=conti.lma$list.contig.lma)
+
+str(lma.tuned$tunned.lma)
+str(lma.tuned$not.tunned.commID)
+
+poly.tuned=FineTuning(dat=Brindisi, 
+                      out.ini=out$lma, 
+                      list.contiguity=conti.poly$list.contig.poly)
+
+output=AssignLmaName(Brindisi,lma.tuned$tunned.lma,names.Brindisi)
+out$lma=output
+
+```
+
+\vspace{30pt}
+
+<br><br><br>
+
+# 7. Comparison of different partitions
+
+The LMA delineation is a complex process which needs expert input from
+many fields like statistics, geography, labour market, transportation,
+etc. The methodology proposed in the package
+<mark style="background-color: lightgray">LabourMarketAreas</mark>
+heavily depends on the choice of four parameters, i.e. *minSZ*, *tarSZ*,
+*minSC* and *tarSC*. In some cases, users test different parameters and
+then choose the optimal partition. The package
+<mark style="background-color: lightgray">LabourMarketAreas</mark>
+includes several assessment functionalities. In order to illustrate
+them, we first generate two different LMA partitions.
+
+```{r eval=T}
+#generate a partition with a first set of parameters
+out1= findClusters(LWCom=Brindisi, minSZ=50,minSC=0.3,tarSZ=100,tarSC=0.4)
+out1_name=AssignLmaName(Brindisi,out1$lma,names.Brindisi)                    
+x=CreateLMAShape(out1_name,comIDs="community",lmaIDs="LMA",shp_com=shpBrindisi,id_shp_com="PRO_COM")
+shape1=x$shp_lma
+
+#generate a partition with a second set of parameters
+out2= findClusters(LWCom=Brindisi, minSZ=1000,minSC=0.6,tarSZ=10000,tarSC=0.7)
+out2_name=AssignLmaName(Brindisi,out2$lma,names.Brindisi)                    
+x=CreateLMAShape(out2_name,comIDs="community",lmaIDs="LMA",shp_com=shpBrindisi,id_shp_com="PRO_COM")
+shape2=x$shp_lma
+```
+
+<br><br>
+Firstly, users could test whether the two partitions are equal:
+
+```{r eval=F, warning=FALSE,message=FALSE}
+EqualLmaPartition(out1$lma, out2$lma)
+```
+
+
+<br><br>
+
+Users could use the function **StatClusterData** in order to compare the
+statistical indicators stemming from each LMA partition. For example,
+users could compare the number of LMAs containing a single community; this is considered a unwanted feature as we do expect that elementary units are related with each other (except for peculiar cases).
+
+```{r eval=T, warning=FALSE,message=FALSE}
+#Use the structure without names
+stats_first=StatClusterData(out1$lma,c(50,0.3,100,0.4),1,Brindisi)
+stats_second=StatClusterData(out2$lma,c(1000,0.6,10000,0.7),1,Brindisi)
+#str(stats_first)
+#str(stats_second)
+stats_first$StatQuality$NbClusterUniqueCom
+stats_second$StatQuality$NbClusterUniqueCom
+
+```
+
+<br><br>
+
+Instead of individually and repeatedly using the function
+**StatClusterData**, two or more partitions could be simultaneously
+analyzed by means of the function **CompareLMAsStat**.
+
+
+
+```{r eval=T, warning=FALSE,message=FALSE}
+comparison=CompareLMAsStat(list(out1,out2),Brindisi)
+```
+
+
+
+<br><br>
+
+Users could also compare two partitions by checking the assignment of
+particular communities. The figure below shows the output of the
+**PlotLmaCommunity** function. For a given community, e.g. 74014, the
+figure shows the two LMA to which community 74014 belongs to, in the
+first and second setting, respectively. The red territories are those in
+common, while the yellow communities are those beloging to one LMA
+partition but not to the other.
+
+\newpage
+
+```{r eval=F,warning=FALSE,message=FALSE}
+PlotLmaCommunity(list(out1_name,out2_name),"LMA","74014", shpBrindisi, "PRO_COM","my_full_path\\name_bmp_file.bmp")
+```
+
+```{r eval=T,echo=F ,warning=FALSE,message=FALSE,fig.align='center'}
+col.vec = c("red", "orange", "yellow")
+  list.lma=list(out1_name,out2_name)
+  shp_com=shpBrindisi
+  lmaIDs="LMA"
+  communityID="74014"
+  id_shp="PRO_COM"
+
+  # par(mfrow = c(1, 2))
+  counter = 1
+  lma = list.lma[[counter]]
+  x = CreateLMAShape(lma, comIDs = "community", lmaIDs = lmaIDs, 
+                     shp_com = shp_com, dsn = NULL, shp_com_name = NULL, 
+                     id_shp_com = id_shp, outd = NULL, outf = NULL, bf = NULL, 
+                     po = c("green", 1, 2, "red", 1, 2, 0.8, 2))
+  indice = grep(lmaIDs, names(lma$clusterList))
+  current.lma = lma$clusterList[community %in% communityID, 
+                                indice, with = F]
+  com.in.current.lma = lma$clusterList[unlist(lma$clusterList[, 
+                                                              indice, with = F]) %in% unlist(current.lma), community]
+  current.lma2 = list.lma[[2]]$clusterList[community %in% 
+                                             communityID, indice, with = F]
+  com.in.current.lma2 = list.lma[[2]]$clusterList[unlist(list.lma[[2]]$clusterList[, 
+                                                                                   indice, with = F]) %in% unlist(current.lma2), community]
+  new.com = setdiff(com.in.current.lma, com.in.current.lma2)
+  indicecom = grep(id_shp, names(shp_com@data))
+  indicelma = grep(lmaIDs, names(x$shp_lma))
+  # plot(shp_com[shp_com@data[, indicecom] %in% com.in.current.lma,  ], border = "gray", main = counter)
+  # plot(x$shp_lma[x$shp_lma@data[, indicelma] %in% current.lma, ], border = "red", add = T)
+  # plot(shp_com[shp_com@data[, indicecom] %in% communityID,   ], border = "gray", col = col.vec[1], add = T)
+  # 
+mappa1=tm_shape(shp_com[shp_com@data[, indicecom] %in% com.in.current.lma,])+tm_borders("gray")
+mappa1=mappa1+tm_shape(x$shp_lma[x$shp_lma@data[, indicelma] %in% current.lma, ])+tm_borders("red")
+mappa1=mappa1+tm_shape(shp_com[shp_com@data[, indicecom] %in% communityID,   ])+tm_borders("gray")+tm_fill(col=col.vec[1])+tm_text("PRO_COM")
+ 
+  
+  
+  counter = 2
+  lma = list.lma[[counter]]
+  x = CreateLMAShape(lma, comIDs = "community", lmaIDs = lmaIDs, 
+                     shp_com = shp_com, dsn = NULL, shp_com_name = NULL, 
+                     id_shp_com = id_shp, outd = NULL, outf = NULL, bf = NULL, 
+                     po = c("green", 1, 2, "red", 1, 2, 0.8, 2))
+  indice = grep(lmaIDs, names(lma$clusterList))
+  current.lma = lma$clusterList[community %in% communityID, 
+                                indice, with = F]
+  com.in.current.lma = lma$clusterList[unlist(lma$clusterList[, 
+                                                              indice, with = F]) %in% unlist(current.lma), community]
+  current.lma1 = list.lma[[1]]$clusterList[community %in% 
+                                             communityID, indice, with = F]
+  com.in.current.lma1 = list.lma[[1]]$clusterList[unlist(list.lma[[1]]$clusterList[, 
+                                                                                   indice, with = F]) %in% unlist(current.lma1), community]
+  new.com = setdiff(com.in.current.lma, com.in.current.lma1)
+  indicecom = grep(id_shp, names(shp_com@data))
+  indicelma = grep(lmaIDs, names(x$shp_lma))
+  # plot(shp_com[shp_com@data[, indicecom] %in% com.in.current.lma, ], border = "gray", main = counter)
+  # plot(x$shp_lma[x$shp_lma@data[, indicelma] %in% current.lma, ], border = "red", add = T)
+  # plot(shp_com[shp_com@data[, indicecom] %in% communityID, ], border = "gray", col = col.vec[1], add = T)
+  # 
+  mappa2=tm_shape(shp_com[shp_com@data[, indicecom] %in% com.in.current.lma, ])+tm_borders("gray")+tm_fill("yellow")+tm_text("PRO_COM")
+  mappa2=mappa2+tm_shape(x$shp_lma[x$shp_lma@data[, indicelma] %in% current.lma, ])+tm_borders("red")
+  mappa2=mappa2+tm_shape(shp_com[shp_com@data[, indicecom] %in% communityID, ])+tm_borders("gray")+tm_fill(col= "red")+tm_text("PRO_COM")
+
+ mappa1
+ 
+ mappa2
+ 
+#tmap_arrange(mappa1,mappa2,ncol=2)
+```
+
+<br><br><br>
+
+Finally, in order to compare two partitions, the package
+<mark style="background-color: lightgray">LabourMarketAreas</mark>
+includes also the function **LmaSpatialComparison**. For each LMA in the
+first partition, the LMA in the second partition that maximizes the
+intersection area is found. Then the function **LmaSpatialComparison**
+returns the areas of the two LMAs and their intersection area together
+with the coverage percentages, i.e. *shape_area, shape_ref_area*,
+*area_intersection* , *perc_intersection_shape* and
+*perc_intersection_shape_ref* respectively. The function
+**LmaSpatialComparison** also returns the number of employees living and
+working in the two LMAs.
+
+```{r eval=TRUE,warning=FALSE,message=FALSE}
+spatial_comp=LmaSpatialComparison(shape1,shape2)[]
+str(spatial_comp)
+```
+
+<br><br><br>
+
+# 8. Thematic maps
+
+Besides the dissemination of structural information on labour market
+areas, the R package
+<mark style="background-color: lightgray">LabourMarketAreas</mark>
+includes the possibility to generate thematic maps, i.e. maps based on
+meaningful statistical indicators. The function **AddStatistics**  could be used to compute statistics at LMA level provided data at community level is available. This function **sums** the values at community level to obtain the corresponding value at LMA level.
+The obtained statistics can then, in turn, be used to create maps by mean of the LMA shape files. 
+```{r echo=TRUE,eval=TRUE,fig.align='center'}
+lma_pop=AddStatistics(shpBrindisi@data[,c("PRO_COM","POP2001")], "PRO_COM",out1$lma,"community" )
+head(lma_pop)
+shp_stats=sp::merge(shape2,lma_pop,by.x="LMA",by.y="cluster")
+tm_shape(shp_stats)+tm_borders("red")+tm_fill("POP2001")+tm_view(view.legend.position = c('right','bottom'))+tm_layout(legend.text.size=0.6)
+```
+
+ 
+
+```{r echo=FALSE}
+options(warn=0)
+```

@@ -73,6 +73,7 @@ utils::globalVariables(c("Code"
                          ,"shapi_good"
                          ,"area"
                          ,"selected_output"
+                         ,"iso"
 )
 ,add=T)
 
@@ -1581,6 +1582,7 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
                      poly.com.linkage=data.table(df.mun.poly),
                      poly.nolink=data.table(poly.nolink.ID,poly.nolink.name))
   
+  iso=data.table()
   return(list(isolated.lma=isolated.lma,isolated.poly=isolated.poly))
   
 }
