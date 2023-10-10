@@ -21,7 +21,7 @@ list of three data.frames: clusterList, LWClus and marginals. See function findC
 numeric value, the Q-modularity index for the given partition.
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi, Michele D'Alo'
 }
 \seealso{
 findClusters

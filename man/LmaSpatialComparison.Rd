@@ -8,21 +8,25 @@ LmaSpatialComparison
 This function takes as input the shapefiles of two distinct sets of LMAs (on the same territory) and produces statistics to compare them.
 }
 \usage{
-LmaSpatialComparison(shape,shape_ref)
+LmaSpatialComparison(shape,shape_ref,lma.id="LMA")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{shape}{
-Shapefile of the output of an LMA delineation process.
+Shapefile of the output of an LMA delineation process (sf object).
 }
   \item{shape_ref}{
-Shapefile of the output of an LMA delineation process.
+Shapefile of the output of an LMA delineation process (sf object).
+}
+
+  \item{lma.id}{
+Column name of the column registering the LMA (the same in both shape files).
 }
 
   
 }
 \value{
-The output is a data.table with statistics on the comparison of the two shapefiles..
+The output is a data.table with statistics on the comparison of the two shapefiles.
 
 Each row represents an association between an LMA in the
 shape partition (first argument) and an unique LMA in the shape_ref

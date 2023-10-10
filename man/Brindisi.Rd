@@ -10,5 +10,5 @@ Brindisi
 data(Brindisi)
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi, Michele D'Alo'
 }

@@ -26,7 +26,7 @@ This function determines, for each pair of cluster in LWClus,  the cohesion; the
 Integer: the candidate cluster identifier.
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' and Guido van den Heuvel
+Daniela Ichim, Luisa Franconi, Michele D'Alo', Guido van den Heuvel
 }
 \note{
 This function is called and used internally by the main function findClusters. 

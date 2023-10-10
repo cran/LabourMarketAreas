@@ -4,9 +4,11 @@
 \title{
 iso
 }
-\description{Used for creating documentation). 
+\description{a list used to build vignette
 }
-
+\usage{
+iso
+}
 \author{
-Daniela Ichim, Luisa Franconi  
+Daniela Ichim, Luisa Franconi
 }

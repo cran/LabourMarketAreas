@@ -12,8 +12,8 @@ Makes Travel-To-Work-Areas from commuting flow data by means of the version of t
 \tabular{ll}{
 Package: \tab LabourMarketAreas\cr
 Type: \tab Package\cr
-Version: \tab 3.3.1\cr
-Date: \tab 2022-05-02\cr
+Version: \tab 3.4\cr
+Date: \tab 2023-10-09\cr
 License: \tab GPL (>=2)\cr
 }
 
@@ -31,16 +31,18 @@ Every area is characterised by the number of commuters living in it, by the numb
 The package produces LMAs for the country/region for which commuting flows are available at basic territorial level (municipality, province, census output areas, etc.). We call this basic territorial level community. If the names of the communities are provided, the package allows to assign names to each LMA (see function AssignLmaName). The package allows also to plot a cartographic map of the produced LMAs given the shape files of the communities (see function PlotLmaCommunity). 
 Finally the package identifies enclaves (communities that are not contiguous with the rest of the LMA they belong to) and perform a re-assignment of such community based on contiguity and cohesion (see the function FineTuning). 
 
-The main output of the function findcluster is the set of LMAs produced by the algorithm, the so called a partition. There are three dimensions that characterise the partition: the dimension of the starting configuration i.e. number of communities in the country/region of interest, the dimension of the final configuration, i.e. the number of LMAs identified by the algorithm using the chosen parameters, and the flows between LMAs. 
+The main output of the function findClusters is the set of LMAs produced by the algorithm, the so called a partition. There are three dimensions that characterise the partition: the dimension of the starting configuration i.e. number of communities in the country/region of interest, the dimension of the final configuration, i.e. the number of LMAs identified by the algorithm using the chosen parameters, and the flows between LMAs. 
 These three dimensions need to be represented in the solution of the algorithm; this is done through a list of three data.table the lma (or clusterData) data structure. Such lma data structure is the cornerstone of the whole package as it is the input or the output of many functions inside the package. 
 
-The work was partially funded by Eurostat Grant "EU-TTWA method: improvements, documentation and sharing knowledge activities" awarded to Istat the Italian National Statistical Institute (\url{http://www.istat.it/en/archive/182743}). This is part of a system of grants in the EU with the aim of supporting the ongoing development of a methodology for the creation of LMA and test the application of methods nationally in the participating National Statistical Institutes. The goal is to arrive at a harmonised EU-wide definition for labour market areas. More info at: 
+The work was partially funded by Eurostat Grant "EU-TTWA method: improvements, documentation and 
+sharing knowledge activities" awarded to Istat the Italian National Statistical Institute 
+(http://www.istat.it/en/archive/182743). This is part of a system of grants in the EU with the aim of supporting the ongoing development of a methodology for the creation of LMA and test the application of methods nationally in the participating National Statistical Institutes. The goal is to arrive at a harmonised EU-wide definition for labour market areas. More info at: 
 
-\url{https://ec.europa.eu/eurostat/cros/content/labour-market-areas_en}
+https://ec.europa.eu/eurostat/cros/content/labour-market-areas_en
 
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' and Guido van den Heuvel
+Daniela Ichim, Luisa Franconi, Michele D'Alo', Guido van den Heuvel
 
 Maintainer: Luisa Franconi <franconi at istat.it>
 }
@@ -48,7 +50,7 @@ Maintainer: Luisa Franconi <franconi at istat.it>
 
 [1] Coombes, M. e Bond, S. (2008). Travel-to-Work Areas: the 2007 review. London: Office for National Statistics, 2008. 
 
-\url{https://ons.maps.arcgis.com/home/item.html?id=5efb4f1c1a114fef8f74f6f0347c10e8}
+https://ons.maps.arcgis.com/home/item.html?id=5efb4f1c1a114fef8f74f6f0347c10e8
 
 [2] Coombes, M., Casado-Diaz, J.M., Martinez-Bernabeu, L. e Carausu, F. (2012). Study on comparable labour market areas: final research report. 17 October 2012. Eurostat- Framework contract no:6001. 2008.001 - 2009.065, Specific contract no:50405.2010.004 - 2011.325.
 
@@ -56,17 +58,18 @@ Maintainer: Luisa Franconi <franconi at istat.it>
 
 [4] Franconi, L., D'Alo', M. and Ichim, D. (2016). Istat Implementation of the  algorithm to develop Labour Market Areas. Available at 
 
-\url{http://www.istat.it/en/files/2016/03/Description-of-the-LabourMarketAreas-algorithm.pdf}.
+
+http://www.istat.it/en/files/2016/03/Description-of-the-LabourMarketAreas-algorithm.pdf.
 
 [5] Franconi, L., Ichim, D. and D'Alo', M. (2017). Labour Market Areas for territorial policies:
 tools for a European approach. Statistical Journal of the IAOS,
 Vol. 33, No. 3, pp. 585-591. 
 
-\url{https://content.iospress.com/articles/statistical-journal-of-the-iaos/sji160343}
+https://content.iospress.com/articles/statistical-journal-of-the-iaos/sji160343
 
 [6] Istat (2015). La nuova Geografia dei Sistemi Locali. (in italian). Available at 
 
-\url{http://www.istat.it/it/files/2015/10/La-nuova-geografia-dei-sistemi-locali.pdf}
+http://www.istat.it/it/files/2015/10/La-nuova-geografia-dei-sistemi-locali.pdf
 
 }
 \keyword{ LabourMarketAreas }

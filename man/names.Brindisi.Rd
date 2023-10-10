@@ -12,5 +12,5 @@ data(names.Brindisi)
 }
 %- maybe also 'usage' for other objects documented here.
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi, Michele D'Alo'
 }

@@ -33,14 +33,14 @@ data.table containing the LMA ID and the summed numerical variables from statDat
 }
 
 \author{
-Ichim, D., Franconi, L., D'Alo, M.
+Daniela Ichim, Luisa Franconi
 }
 \examples{
 # compute population totals at LMA level from population values at community level.
 \dontrun{
 out<- findClusters(LWCom=Brindisi, minSZ=1000,minSC=0.6667,tarSZ=10000,tarSC=0.75, 
 verbose=TRUE)
-AddStatistics(shpBrindisi@data[,c("PRO_COM","POP2001")], "PRO_COM",out$lma,"community" )
+AddStatistics(shpBrindisi[,c("PRO_COM","POP2001")], "PRO_COM",out$lma,"community" )
 }
 }
 

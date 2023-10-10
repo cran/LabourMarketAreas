@@ -28,7 +28,7 @@ A cluster data object, i.e. a list of three components:
 \item{marginals }{data.table of three columns: cluster, amount_live, amount_work}
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' and Guido van den Heuvel
+Daniela Ichim, Luisa Franconi, Michele D'Alo', Guido van den Heuvel
 }
 \note{
 This function is called and used internally by the main function findClusters. 

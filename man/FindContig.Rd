@@ -33,7 +33,7 @@ If type="poly", the output is a list of two components:
 If type="lma", the output is a list containing the IDs of the contiguous labour market areas of each given lma. The list names are the communities identifiers. This option should be used for the labour market areas with a unique community.
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }
 \note{
 This function should be used to identify the neighbours of the labour market areas having an unique community (type="lma") or to identify the labour market areas which are contiguous to a polygon associated to a unique community (the case of a community having an enclave outside its own territory).

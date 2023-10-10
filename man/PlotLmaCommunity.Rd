@@ -27,10 +27,10 @@ The name of the variable identifying the LMA in list.lma.
 Positive integer vector, the IDs of the communities under study.
 }
 \item{shp_com }{
-Spatial polygon data frame containing the shape files of the communities.
+object of class sf containing the shape files of the communities.
 }
 \item{id_shp }{
-The name of the variable identifying the communities in shp_com spatial polygon data frame.
+The name of the variable identifying the communities in shp_com object of class sf.
 }
 \item{bmpfile }{
 character: the name of the bmp file where to save the images complete with its path.
@@ -46,7 +46,7 @@ The graphic is saved in the specified path/file.
 }
 
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }
 
 \seealso{

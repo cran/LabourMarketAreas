@@ -27,7 +27,7 @@ list of three data.tables. It contains the three data.table clusterList, LWClus,
 }
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi, Michele D'Alo'
 }
 \seealso{
 findClusters

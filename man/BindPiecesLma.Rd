@@ -34,7 +34,7 @@ List of five components.
 \item{lma }{ a list of three data.tables: clusterList, LWClus and marginals. Information on commuters, residents and workers is computed using the input commuting flows data frame/data.table.}
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }
 \seealso{
 findClusters

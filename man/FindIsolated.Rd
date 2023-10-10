@@ -19,7 +19,7 @@ com_shp_name, id_com)
 List (three components) containing all defining information on the labour market areas. See findClusters function. The names of the lma have already been assigned (see AssignLmaName).
 }
   \item{lma_shp}{
-spatial polygon object corresponding to  the labour market areas. See function CreateLmaShape. Defaults to NULL.
+object of class sf corresponding to  the labour market areas. See function CreateLmaShape. Defaults to NULL.
 }
 
   \item{lma_shp_path}{
@@ -31,7 +31,7 @@ character. The file name where the shape files of the labour market areas are sa
 }
 
  \item{com_shp}{
-spatial polygon object corresponding to the communities. Defaults to NULL.
+object of class sf corresponding to the communities. Defaults to NULL.
 }
 
   \item{com_shp_path}{
@@ -43,7 +43,7 @@ character. The file name where the shape files of the communities are saved. Def
 }
 
  \item{id_com}{
-character. The field name of the variable containing the community ID in the communities spatial polygon or in their shape files.
+character. The field name of the variable containing the community ID in the communities object of class sf.
 }
 
 }
@@ -70,7 +70,7 @@ poly.nolink: data.table with two colums: poly.nolink.ID and poly.nolink.name. po
 poly.nolink.name character: the name of the labour market area with no-linked polygons.
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }
 \seealso{
 findClusters, CreateLmaShape

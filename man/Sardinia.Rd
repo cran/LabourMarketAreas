@@ -11,5 +11,5 @@ data(Sardinia)
 #Encoding(names.Sardinia$com.name)="latin1" # to deal with a specific accent.
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo'
+Daniela Ichim, Luisa Franconi, Michele D'Alo'
 }

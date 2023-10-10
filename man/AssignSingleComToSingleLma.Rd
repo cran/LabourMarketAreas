@@ -32,7 +32,7 @@ The new labour market partition. A list of three components named:
   \item{marginals }{A data.table with three variables: cluster, amount_live, amount_work}
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }
 \note{
 This function can be called before the call to the function AssignLmaName.

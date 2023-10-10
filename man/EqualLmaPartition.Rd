@@ -23,8 +23,7 @@ List (three components) containing all defining information of the partition to 
 A logical value.
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' 
-}
+Daniela Ichim, Luisa Franconi}
 \seealso{
 findClusters
 }

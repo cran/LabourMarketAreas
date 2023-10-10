@@ -99,7 +99,7 @@ Workers, data frame containing the variables Code, integer representing the id o
 }
 
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' and Guido van den Heuvel
+Daniela Ichim, Luisa Franconi, Michele D'Alo', Guido van den Heuvel
 }
 \note{
 Note that everytime that the idcom_type is not NULL in all the output of the function the community identifier will be character and not integer. In anycase in the sink file and in the PartialClusterData component the community identifier will still be integer and not character.

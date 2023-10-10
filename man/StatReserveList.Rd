@@ -33,7 +33,7 @@ A list with the following components:
 \item{summaryWorkersByCom}{numeric vector; summary statistics on the number of workers by community in the reserve list.}
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo'
+Daniela Ichim, Luisa Franconi
 }
 \seealso{
 findClusters

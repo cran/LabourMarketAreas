@@ -32,5 +32,5 @@ A list of two components:
 \item{not.tunned.commID }{ a vector of communities IDs that were not assigned based on a contiguity principle; e.g. those communities having no flows with their neighbours.}
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }

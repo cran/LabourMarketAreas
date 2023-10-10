@@ -21,7 +21,7 @@ list of LMAs to be compared. Each component of the list is a list of at least tw
 A matrix containing the quality statistics computed by the StatClusterData function.
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' 
+Daniela Ichim, Luisa Franconi, Michele D'Alo'
 }
 \seealso{
 findClusters, StatClusterData

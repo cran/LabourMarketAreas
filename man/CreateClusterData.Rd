@@ -29,7 +29,7 @@ A list of three components:
 \item{marginals: }{a data.table representing the cluster characteristics. The three variables are cluster, amount_live (residents) and amount_work (workers).}
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo'
+Daniela Ichim, Luisa Franconi, Michele D'Alo'
 }
 \seealso{
 findClusters

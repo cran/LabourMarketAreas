@@ -1,14 +1,14 @@
-\name{CreateLMAShape}
-\alias{CreateLMAShape}
+\name{CreateLMAshape}
+\alias{CreateLMAshape}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-CreateLMAShape
+CreateLMAshape
 }
 \description{
 Starting from the communities shape files, the function creates the shape files of labour market areas. 
 }
 \usage{
-CreateLMAShape(lma,comIDs,lmaIDs,shp_com,dsn,shp_com_name,id_shp_com,outd,outf,bf,po)}
+CreateLMAshape(lma,comIDs,lmaIDs,shp_com,dsn,shp_com_name,id_shp_com,outd,outf,bf,po)}
 
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,7 +22,7 @@ Name of the variable containing the community identifier in the lma input.
 Name of the variable containing the labour market areas identifier in the lma input.
 }
  \item{shp_com}{
-Spatial polygon (R object) containing the shape file of the communities. Defaults to NULL. In case both shp_com and shp_com_name are provided, only the first one is considered.
+Object of class sf containing the shape file of the communities. Defaults to NULL. In case both shp_com and shp_com_name are provided, only the first one is considered.
 }
 \item{dsn}{
 character; data source name specifying the directory (path) in which the shp_com_name file is stored. 
@@ -49,12 +49,12 @@ Graphical parameters (plot_opt) to be used when bmpfile is not NULL. The paramet
 }
 \value{
 A list of three components:
-\item{shp_lma }{spatial polygon containing the shape file of lma}
+\item{shp_lma }{object of class sf containing the shape file of lma}
 \item{comID.in.LMA.not.in.SHP }{vector of communities registered in lma but not in the input shape object/file.}
 \item{comID.in.SHP.not.in.LMA }{vector of communities registered in the input shape object/file but not in the lma.}
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }
 \note{
 This function has to be applied on a labour market partition whose names are assigned. 

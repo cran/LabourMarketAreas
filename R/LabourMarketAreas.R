@@ -73,7 +73,18 @@ utils::globalVariables(c("Code"
                          ,"shapi_good"
                          ,"area"
                          ,"selected_output"
-                         ,"iso"
+                         ,"area_intersection"
+                         ,"shape_area"
+                         ,"shape_ref_area"
+                         ,"shape_EMP_live"
+                         ,"shape_ref_EMP_work"
+                         ,"perc_intersection_shape"
+                         ,"perc_intersection_shape_ref"
+                         ,"shape_EMP_work"
+                         ,"shape_ref_EMP_live"
+                         ,"."
+                         ,"xx"
+                         
 )
 ,add=T)
 
@@ -701,18 +712,30 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
     sei=out$reserve.list[temp==6]
     cinque=out$reserve.list[temp==5]
     
+    ####QUI QUANDO SEI VUOTO E IDCOM_TYPE NON VUOTO, QUI DA ERRORE
+    #DICENDO CHE SI ASPETTA UN VEC NON UN DATO NULLO
+    if(!is.null(sei) & is.list(sei)){
+      sei=data.table(matrix(unlist(sei),length(sei),6,byrow=T))
+      sei[,V6:=as.integer(V6)]
+      sei=merge(sei,LIST.COM.alpha,by.x="V6",by.y="link")
     
-    sei=data.table(matrix(unlist(sei),length(sei),6,byrow=T))
-    sei[,V6:=as.integer(V6)]
-    sei=merge(sei,LIST.COM.alpha,by.x="V6",by.y="link")
-    cinque=data.table(matrix(unlist(cinque),length(cinque),5,byrow=T))
-    cinque[,V5:=as.integer(V5)]
-    cinque=merge(cinque,LIST.COM.alpha,by.x="V5",by.y="link")
-    sei[,V6:=NULL]
-    cinque[,V5:=NULL]
+      sei[,V6:=NULL]
+      sei=split(sei,list(sei$community))
+      
+      
+      }
+    if(is.null(sei) | !is.list(sei)){sei=0}
     
-    cinque=split(cinque,list(cinque$community))
-    sei=split(sei,list(sei$community))
+    if(!is.null(cinque) & is.list(cinque)){
+      cinque=data.table(matrix(unlist(cinque),length(cinque),5,byrow=T))
+      cinque[,V5:=as.integer(V5)]
+      cinque=merge(cinque,LIST.COM.alpha,by.x="V5",by.y="link")
+      cinque[,V5:=NULL]
+            cinque=split(cinque,list(cinque$community))
+      
+      }
+    
+    if(is.null(cinque) | !is.list(cinque)){cinque=0}
     
     out$reserve.list=list(cinque,sei)
     
@@ -725,14 +748,6 @@ findClusters <- function(LWCom,minSZ,minSC,tarSZ,tarSC, verbose=F,sink.output=NU
   
   return(out)
 }
-
-
-
-
-
-
-
-
 
 
 mergeCluster <- function(clusterData, cluster1, cluster2) {
@@ -1154,119 +1169,155 @@ AssignLmaName=function(LWCom,lma,ComNames){
   return(lma)
 }
 
-CreateLMAShape=function(lma
-                        ,comIDs="community"
-                        ,lmaIDs="LMA"
-                        ,shp_com=NULL
-                        ,dsn=NULL
-                        ,shp_com_name=NULL
-                        ,id_shp_com
-                        ,outd=NULL
-                        ,outf=NULL
-                        ,bf=NULL
-                        ,po=c("green",1,2,"red",1,2,0.8,2)){
+
+CreateLMAshape=function (lma,
+                         comIDs = "community", lmaIDs = "LMA",
+                         shp_com = NULL, 
+                              dsn = NULL, shp_com_name = NULL, 
+                         id_shp_com, outd = NULL, 
+                              outf = NULL, bf = NULL,
+                         po = c("green", 1, 2, "red", 1, 
+                                                             2, 0.8, 2)
+                              
+                         ) 
+{
   
   
   
   
-  
-  if(!all(c("com.name","lma.name")%in%names(lma$clusterList))){
+  if (!all(c("com.name", "lma.name") %in% names(lma$clusterList))) {
     stop("ERROR: please check the names of the lma$clusterList object.")
   }
-  if(!all(c("lma.name.live","lma.name.work")%in%names(lma$LWClus))){ stop("ERROR: please check the names of the lma$LWClus object.")
+  if (!all(c("lma.name.live", "lma.name.work") %in% names(lma$LWClus))) {
+    stop("ERROR: please check the names of the lma$LWClus object.")
   }
-  if(!all(c("lma.name")%in%names(lma$marginals))){ stop("ERROR: please check the names of the lma$marginals object.")
+  if (!all(c("lma.name") %in% names(lma$marginals))) {
+    stop("ERROR: please check the names of the lma$marginals object.")
   }
-  
-  
-  
-  if(is.null(shp_com_name) & is.null(shp_com)){
-    stop("ERROR: please provide an input shape object or path (dsn) and file to be read.")
+  if (is.null(shp_com_name) & is.null(shp_com)) {
+    stop("ERROR: please provide an input shape object OR path (dsn) and file to be read.")
   }
-  
-  if(!is.null(shp_com_name) & is.null(dsn)){
+  if (!is.null(shp_com_name) & is.null(dsn)) {
     stop("ERROR: please provide a valid dsn.")
   }
-  
-  if(is.null(shp_com_name) & !is.null(dsn)){
+  if (is.null(shp_com_name) & !is.null(dsn)) {
     stop("ERROR: please provide a valid filename.")
   }
   
-  if(is.null(shp_com_name) & !is.null(shp_com)){
-    if(is.na(shp_com@proj4string@projargs)){
-      stop("ERROR: please provide an input file or a shape file containing a valid proj4string.")
+  if (is.null(shp_com_name) & !is.null(shp_com)) {
+    
+    ##commento daniela 22 febb 2023, per eliminare sp e comunque non usiamo proj4string
+    
+    # if (is.na(shp_com@proj4string@projargs)) {
+    #   stop("ERROR: please provide an input file OR a shape file containing a valid proj4string.")
+    # }
+    # if (!is.na(shp_com@proj4string@projargs)) {
+    #   shp = shp_com
+    #   proj4string = shp_com@proj4string
+    # }
+    
+    #daniela 22 febb 2023 aggiunta la riga sotto per creare oggetto di tipo sf
+    if(any(class(shp_com)=="SpatialPolygonsDataFrame")){shp=st_as_sf(shp_com)}
+    if(any(class(shp_com)=="sf")){shp=shp_com}
+    if(length(intersect(class(shp_com),c("sf","SpatialPolygonsDataFrame")))==0){
+      stop("ERROR: please provide a shape file that is an object of class sf or, only for older versions of the LabourMarketAreas package, a SpatialPolygonsDataFrame. Please consider updates.")
     }
-    if(!is.na(shp_com@proj4string@projargs)){
-      shp=shp_com
-      proj4string=shp_com@proj4string
-    }
+    
+    
   }
   
   
-  if(!is.null(shp_com_name) & !is.null(dsn)){
-    shp <- rgdal::readOGR(dsn=dsn, layer=shp_com_name)
+  if (!is.null(shp_com_name) & !is.null(dsn)) {
+    #daniela 22febb2023 cambiata la lettura del file in sf (da RGDAL)
+    shp <- st_read(dsn = dsn, layer = shp_com_name)
   }
-  
-  if(!is.null(shp_com_name) & !is.null(shp_com)){
-    print("Warning: Inputs shp_com and shp_com_name are both provided. Only the second is considered.")
+  if (!is.null(shp_com_name) & !is.null(shp_com)) {
+    print("Warning: Inputs shp_com and shp_com_name (file) are both provided. Only the second is considered.")
   }
-  
-  
-  
-  if(comIDs%in%colnames(lma$clusterList) & lmaIDs%in%colnames(lma$clusterList) & lmaIDs%in%colnames(lma$marginals)){
+  if (comIDs %in% colnames(lma$clusterList) & lmaIDs %in% 
+      colnames(lma$clusterList) & lmaIDs %in% colnames(lma$marginals)) {
+    shp <- merge(shp, data.frame(lma$clusterList), by.x = id_shp_com, 
+                 by.y = comIDs)
+    # new_shp <- aggregate(shp, by = list(shp[[as.character(colnames(lma$clusterList)[colnames(lma$clusterList) == 
+    #                                                                                                    lmaIDs])]]),FUN=head,n=1)
+    butta=ls()
+    if(length(grep("new_shp",butta))){rm(new_shp) }
+    
+    new_shp <- aggregate(shp[,eval(lmaIDs)]
+                         , by =st_drop_geometry(shp[,eval(lmaIDs)]),FUN=head,n=1,do_union=T)
+    
+    new_shp=st_make_valid(new_shp)
+    
+    #daniela 22febb2023
+    #IDs <- sapply(slot(new_shp, "polygons"), function(x) slot(x, "ID"))
+    IDs=as.character(1:length(new_shp$LMA))
+    
+    indi = grep(lmaIDs, names(lma$clusterList))
+    df <- data.frame(AREA = 1:length(unique(data.frame(lma$clusterList)[, 
+                                                                        indi])), row.names = IDs)
+    
+    df[, as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList)) == 
+                                                              lmaIDs])] <- as.character(unique(data.frame(lma$clusterList)[, 
+                                                                                                                           as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList)) == 
+                                                                                                                                                                                lmaIDs])]))
+    
+    df <- df[order(df[, as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList)) == 
+                                                                             lmaIDs])]), ]
+    row.names(df) <- IDs
+    df[, as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList)) == 
+                                                              lmaIDs])] <- as.integer(df[, as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList)) == 
+                                                                                                                                                lmaIDs])])
+    
+    ##daniela 22febb2023
+    #join_com <- sp::SpatialPolygonsDataFrame(new_shp, df)
+    join_com=merge(new_shp,df)
+    
+    #daniela 22febb2023
+    # shp_lma <- sp::merge(join_com, data.frame(lma$marginals), 
+    #                      by = lmaIDs)
+    
+    shp_lma=merge(join_com,data.frame(lma$marginals), 
+                  by = lmaIDs)
     
     
+    #daniela 22febb2023
+    shp_lma=shp_lma[,-grep(".1",names(shp_lma))]
     
-    
-    
-    shp<-sp::merge(shp,data.frame(lma$clusterList),by.x = id_shp_com, by.y = comIDs)
-    new_shp<-maptools::unionSpatialPolygons(shp, IDs = shp[[as.character(colnames(lma$clusterList)[colnames(lma$clusterList)==lmaIDs])]])
-    IDs <- sapply(slot(new_shp, "polygons"), function(x) slot(x, "ID"))
-    indi=grep(lmaIDs,names(lma$clusterList))
-    df <- data.frame(AREA=1:length(unique(data.frame(lma$clusterList)[,indi])),row.names=IDs)
-    
-    df[,as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList))==lmaIDs])]<-as.character(unique(data.frame(lma$clusterList)[,as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList))==lmaIDs])]))
-    df<-df[order(df[,as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList))==lmaIDs])]),]
-    
-    row.names(df)<-IDs
-    df[,as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList))==lmaIDs])]<-as.integer(df[,as.character(colnames(data.frame(lma$clusterList))[colnames(data.frame(lma$clusterList))==lmaIDs])])
-    
-    join_com <- sp::SpatialPolygonsDataFrame(new_shp, df)
-    
-    shp_lma<-sp::merge(join_com,data.frame(lma$marginals),by=lmaIDs)
-    print(class(shp_lma))
-    if(!is.null(outf)){
-      rgdal::writeOGR(shp_lma,outd, outf, driver="ESRI Shapefile")
+    #print(class(shp_lma))
+    if (!is.null(outf)) {
+      st_write(shp_lma, outd, outf, driver = "ESRI Shapefile")
     }
-    
-    if(!is.null(bf)){
-      bmp(bf,width=1200,height=1200)
-      plot(shp_lma,col=po[1],
-           lwd=as.numeric(po[2]),lty=as.numeric(po[3]))
+    if (!is.null(bf)) {
+      bmp(bf, width = 1200, height = 1200)
+      plot(shp_lma, col = po[1], lwd = as.numeric(po[2]), 
+           lty = as.numeric(po[3]))
       centroids <- coordinates(join_com)
-      text(centroids, label=shp_lma@data$lma.name,
-           col=po[4],lwd=as.numeric(po[5]),lty=as.numeric(po[6]),
-           cex = as.numeric(po[7]),font = as.numeric(po[8]))
+      text(centroids, label = shp_lma$lma.name, col = po[4], 
+           lwd = as.numeric(po[5]), lty = as.numeric(po[6]), 
+           cex = as.numeric(po[7]), font = as.numeric(po[8]))
       dev.off()
     }
-    
   }
-  
-  if(!(comIDs%in%colnames(lma$clusterList) & lmaIDs%in%colnames(lma$clusterList))){
+  if (!(comIDs %in% colnames(lma$clusterList) & lmaIDs %in% 
+        colnames(lma$clusterList))) {
     stop("ERROR: please check the column names of the lma object, especially the clusterList component")
   }
-  
-  if(!(lmaIDs%in%colnames(lma$marginals))){
+  if (!(lmaIDs %in% colnames(lma$marginals))) {
     stop("ERROR: please check the column names of the lma object, especially the marginals component")
   }
+  #QUI 27 APRILE 2023 HO USATO IL GET NELLE DIFFERENZE
+  comID.in.LMA.not.in.SHP = setdiff(lma$clusterList[, get(comIDs)], 
+                                    data.table(shp)[, get(id_shp_com)])
+  comID.in.SHP.not.in.LMA = setdiff(data.table(shp)[, get(id_shp_com)], lma$clusterList[, get(comIDs)])
   
-  comID.in.LMA.not.in.SHP=setdiff(lma$clusterList[,get(comIDs)],shp@data[,which(names(shp@data)==id_shp_com)])
-  comID.in.SHP.not.in.LMA=setdiff(shp@data[,which(names(shp@data)==id_shp_com)],lma$clusterList[,get(comIDs)])
   
-  return(list(shp_lma=shp_lma
-              ,comID.in.LMA.not.in.SHP=comID.in.LMA.not.in.SHP
-              ,comID.in.SHP.not.in.LMA=comID.in.SHP.not.in.LMA))
+  
+  
+  
+  return(list(shp_lma = shp_lma, comID.in.LMA.not.in.SHP = comID.in.LMA.not.in.SHP, 
+              comID.in.SHP.not.in.LMA = comID.in.SHP.not.in.LMA))
 }
+
 
 AssignSingleComToSingleLma=function(lma,comID,lmaID,dat){
   
@@ -1325,8 +1376,8 @@ EqualLmaPartition=function(lma1,lma2){
     out=FALSE
   }
   else{
-    setkey(lma1$clusterList,community,cluster)
-    setkey(lma2$clusterList,community,cluster)
+    setkey(lma1$clusterList,community,LMA)
+    setkey(lma2$clusterList,community,LMA)
     if(!all(lma1$clusterList$cluster==lma2$clusterList$cluster)){
       out=FALSE
       print("The same communities, but different clusters.")
@@ -1334,6 +1385,71 @@ EqualLmaPartition=function(lma1,lma2){
   }
   return(out)
 }
+
+CreateClusterData=function(LWCom,residents=NULL){
+  setDT(LWCom)
+  setcolorder(LWCom,c("community_work","community_live","amount"))
+  
+  LIST.COM=data.table(c(LWCom[,community_live],LWCom[,community_work]))
+  LIST.COM=unique(LIST.COM)[order(V1)]
+  
+  if(is.null(residents)){
+    residents=setcolorder(LWCom[,list(residents=sum(amount)),by=list(Code=community_live)],c("residents","Code"))
+    residents=merge(residents,LIST.COM,by.x="Code",by.y="V1",all=T)
+    residents[is.na(residents),residents:=0]
+  }
+  
+  
+  communitiesList <- unique(c(LWCom[,community_live], LWCom[,community_work]))
+  
+  clusterList <- 1:length(communitiesList)
+  
+  result <- data.table(community = communitiesList, cluster = clusterList)
+  
+  clusterList     <- merge(result, residents, by.x = "community", by.y = "Code")
+  
+  rm(result)
+  
+  names(LWCom)[grep("_live",names(LWCom))][1]="community_live"
+  names(LWCom)[grep("_work",names(LWCom))][1]="community_work"
+  
+  LWClus <- merge(LWCom, data.table(clusterList), by.x = "community_live", by.y = "community",all=T)
+  LWClus <- merge(LWClus, data.table(clusterList), by.x = "community_work", by.y = "community", suffixes = c("_live", "_work"),all=T)
+  
+  out<-LWClus[, list(amount=sum(amount)),by=list(cluster_live,cluster_work)]
+  out[is.na(amount),amount:=0]
+  
+  out[,col:=(is.na(cluster_live) & is.na(cluster_work) & amount==0)]
+  out=out[!(col)]
+  out[,col:=NULL]
+  
+  LWClus <- out
+  rm(out)
+  
+  
+  
+  
+  liveMarginal <- LWClus[, list(amount=sum(amount)), by = list(cluster=cluster_live)]
+  workMarginal <- LWClus[, list(amount=sum(amount)), by = list(cluster=cluster_work)]
+  
+  marginals <- merge(liveMarginal, workMarginal, by="cluster",suffixes = c("_live", "_work"), all=TRUE)
+  
+  rm(liveMarginal)
+  rm(workMarginal)
+  
+  
+  
+  
+  clusterData <- list(clusterList = clusterList, LWClus = LWClus, marginals = marginals)
+  
+  return(clusterData)
+  
+}
+
+
+
+
+
 
 FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
                       com_shp=NULL,com_shp_path=NULL,com_shp_name=NULL,
@@ -1357,18 +1473,27 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
   }
   
   if(is.null(lma_shp_name) & !is.null(lma_shp)){
-    if(is.na(lma_shp@proj4string@projargs)){
-      stop("ERROR: please provide an input file or a shape file containing a valid proj4string.")
+    
+    # if(is.na(lma_shp@proj4string@projargs)){
+    #   stop("ERROR: please provide an input file or a shape file containing a valid proj4string.")
+    # }
+    # if(!is.na(lma_shp@proj4string@projargs)){
+    #   shp=lma_shp
+    #   proj4string=lma_shp@proj4string
+    # }
+    
+    #daniela 22 febb 2023 aggiunta la riga sotto per creare oggetto di tipo sf
+    if(any(class(lma_shp)=="SpatialPolygonsDataFrame")){shp=sf::st_as_sf(lma_shp)}
+    if(any(class(lma_shp)=="sf")){shp=lma_shp}
+    if(length(intersect(class(lma_shp),c("sf","SpatialPolygonsDataFrame")))==0){
+      stop("ERROR: please provide a shape file that is an object of class sf or, only for older versions of the LabourMarketAreas package, a SpatialPolygonsDataFrame. Please consider updates.")
     }
-    if(!is.na(lma_shp@proj4string@projargs)){
-      shp=lma_shp
-      proj4string=lma_shp@proj4string
-    }
+    
   }
   
   
   if(!is.null(lma_shp_name) & !is.null(lma_shp_path)){
-    shp <- rgdal::readOGR(dsn=lma_shp_path, layer=lma_shp_name)
+    shp <- sf::st_read(dsn=lma_shp_path, layer=lma_shp_name)
   }
   
   if(!is.null(lma_shp_name) & !is.null(lma_shp)){
@@ -1377,17 +1502,24 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
   
   
   
+  #daniela 22febb2023
+  # if(length(grep("lma_nam",names(shp@data)))>0){
+  #   names(shp@data)[names(shp@data)=="lma_nam"]="lma.name"}
+  # if(length(grep("EMP_liv",names(shp@data)))>0){  
+  #   names(shp@data)[names(shp@data)=="EMP_liv"]="EMP_live"}
+  # if(length(grep("EMP_wrk",names(shp@data)))>0){    
+  #   names(shp@data)[names(shp@data)=="EMP_wrk"]="EMP_work"}
+  # if(length(grep("EMP_lv_",names(shp@data)))>0){    
+  #   names(shp@data)[names(shp@data)=="EMP_lv_"]="EMP_live_work"}
   
-  if(length(grep("lma_nam",names(shp@data)))>0){
-    names(shp@data)[names(shp@data)=="lma_nam"]="lma.name"}
-  if(length(grep("EMP_liv",names(shp@data)))>0){  
-    names(shp@data)[names(shp@data)=="EMP_liv"]="EMP_live"}
-  if(length(grep("EMP_wrk",names(shp@data)))>0){    
-    names(shp@data)[names(shp@data)=="EMP_wrk"]="EMP_work"}
-  if(length(grep("EMP_lv_",names(shp@data)))>0){    
-    names(shp@data)[names(shp@data)=="EMP_lv_"]="EMP_live_work"}
-  
-  
+  if(length(grep("lma_nam",names(shp)))>0){
+    names(shp)[names(shp)=="lma_nam"]="lma.name"}
+  if(length(grep("EMP_liv",names(shp)))>0){  
+    names(shp)[names(shp)=="EMP_liv"]="EMP_live"}
+  if(length(grep("EMP_wrk",names(shp)))>0){    
+    names(shp)[names(shp)=="EMP_wrk"]="EMP_work"}
+  if(length(grep("EMP_lv_",names(shp)))>0){    
+    names(shp)[names(shp)=="EMP_lv_"]="EMP_live_work"}
   
   
   if(is.null(com_shp_name) & is.null(com_shp)){
@@ -1402,19 +1534,30 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
     stop("ERROR: please provide a valid filename.")
   }
   
-  if(is.null(com_shp_name) & !is.null(com_shp)){
-    if(is.na(com_shp@proj4string@projargs)){
-      stop("ERROR: please provide an input file or a shape file containing a valid proj4string.")
-    }
-    if(!is.na(com_shp@proj4string@projargs)){
-      comuni91=com_shp
-      proj4string=com_shp@proj4string
-    }
+
+ if(is.null(com_shp_name) & !is.null(com_shp)){
+  #   
+  #   
+  #   # if(is.na(com_shp@proj4string@projargs)){
+  #   #   stop("ERROR: please provide an input file or a shape file containing a valid proj4string.")
+  #   # }
+  #   # if(!is.na(com_shp@proj4string@projargs)){
+  #   #   comuni91=com_shp
+  #   #   proj4string=com_shp@proj4string
+  #   }
+    
+  #daniela 22 febb 2023 aggiunta la riga sotto per creare oggetto di tipo sf
+  if(any(class(com_shp)=="SpatialPolygonsDataFrame")){comuni91=sf::st_as_sf(com_shp)}
+  if(any(class(com_shp)=="sf")){comuni91=com_shp}
+  if(length(intersect(class(com_shp),c("sf","SpatialPolygonsDataFrame")))==0){
+    stop("ERROR: please provide a shape file that is an object of class sf or, only for older versions of the LabourMarketAreas package, a SpatialPolygonsDataFrame. Please consider updates.")
+  }
+    
   }
   
   
   if(!is.null(com_shp_name) & !is.null(com_shp_path)){
-    comuni91 <- rgdal::readOGR(dsn=com_shp_path, layer=com_shp_name)
+    comuni91 <- sf::st_read(dsn=com_shp_path, layer=com_shp_name)
   }
   
   if(!is.null(com_shp_name) & !is.null(com_shp)){
@@ -1425,29 +1568,55 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
   
   
  
+  #daniela 22febb2023 sf
+  # kiki=grep(id_com,names(comuni91@data))
+kiki=grep(id_com,names(comuni91))
   
-  kiki=grep(id_com,names(comuni91@data))
+#daniela 22febb2023 sf
+  # if(length(setdiff(lma$clusterList$community,comuni91@data[,kiki]))>0){
+  #   stop("ERROR: there are communities in the flows data but not in the shape file. Please correct.")
+  # }
+
+if(length(setdiff(lma$clusterList$community,as.data.frame(comuni91)[,kiki]))>0){
+  stop("ERROR: there are communities in the flows data but not in the shape file. Please correct.")
+}
   
-  
-  if(length(setdiff(lma$clusterList$community,comuni91@data[,kiki]))>0){
-    stop("ERROR: there are communities in the flows data but not in the shape file. Please correct.")
-  }
-  
-  if(length(setdiff(comuni91@data[,kiki],lma$clusterList$community))>0){
-    stop("ERROR: there are communities in the shape file but not in the flows data. Please correct.")
-  }
+#daniela 22febb2023 sf
+  # if(length(setdiff(comuni91@data[,kiki],lma$clusterList$community))>0){
+  #   stop("ERROR: there are communities in the shape file but not in the flows data. Please correct.")
+  # }
+
+if(length(setdiff(as.data.frame(comuni91)[,kiki],lma$clusterList$community))>0){
+  stop("ERROR: there are communities in the shape file but not in the flows data. Please correct.")
+}
     
-  comuni91<-sp::merge(comuni91,data.frame(lma$clusterList),by.x = kiki, by.y = "community")
+  comuni91<-merge(comuni91,data.frame(lma$clusterList),by.x = names(comuni91)[kiki], by.y = "community")
   
   
+  #daniela 22febb2023
+  # nbpolygsll <- spdep::poly2nb(shp, row.names =shp@data$LMA,queen=TRUE)
+  #nbpolygsll <- spdep::poly2nb(shp, row.names =shp$LMA,queen=TRUE)
+  nbpolygsll <- st_relate(shp,  pattern = "F***T****")
+  as.nb.sgbp <- function(x, ...) {
+    attrs <- attributes(x)
+    x <- lapply(x, function(i) { if(length(i) == 0L) 0L else i } )
+    attributes(x) <- attrs
+    class(x) <- "nb"
+    x
+  }
+  nbpolygsll=as.nb.sgbp(nbpolygsll)
   
-  nbpolygsll <- spdep::poly2nb(shp, row.names =shp@data$LMA,queen=TRUE)
   Wsll=spdep::nb2mat(nbpolygsll,style="B", zero.policy=TRUE)
   rownames(Wsll[rowSums(Wsll)==0,])
-  colnames(Wsll)=shp@data$LMA
-  
-  nolinksll=shp@data$LMA[shp@data$LMA%in%rownames(Wsll)[rowSums(Wsll)==0]]
-  nolinksllname=shp@data$lma.name[shp@data$LMA%in%rownames(Wsll)[rowSums(Wsll)==0]]
+  #daniela 22febb2023 sf
+  # colnames(Wsll)=shp@data$LMA
+  colnames(Wsll)=shp$LMA
+  rownames(Wsll)=shp$LMA
+  #daniela 22febb2023 sf
+  # nolinksll=shp@data$LMA[shp@data$LMA%in%rownames(Wsll)[rowSums(Wsll)==0]]
+  # nolinksllname=shp@data$lma.name[shp@data$LMA%in%rownames(Wsll)[rowSums(Wsll)==0]]
+  nolinksll=shp$LMA[shp$LMA%in%rownames(Wsll)[rowSums(Wsll)==0]]
+  nolinksllname=shp$lma.name[shp$LMA%in%rownames(Wsll)[rowSums(Wsll)==0]]
   
   
   shp=shp[!shp$LMA%in%nolinksll,]
@@ -1467,59 +1636,74 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
   badsllname="0"
   if(length(badsll)>0){
   for(kiki in 1:length(badsll)){
+    #daniela 22febb2023 sf
+    # badsllname=c(badsllname,
+    #              as.character(shp@data$lma.name[shp$LMA==badsll[kiki]]))
+    
     badsllname=c(badsllname,
-                 as.character(shp@data$lma.name[shp$LMA==badsll[kiki]]))
+                 as.character(shp$lma.name[shp$LMA==badsll[kiki]]))
   }
   }
   badsllname=badsllname[-1]
   
   
+  ##QUI INTERVENIRE: 
+  #d=sp::disaggregate(shp)
+  d=st_cast(shp,"POLYGON")
   
-  d=disaggregate(shp)
+  # d@data=data.table(d@data)
+  # d@data[,x:=.N,by=lma.name]
+  # d@data[x>=2,ID_PiecesLMA:=paste(as.character(LMA),1:max(x),sep="_"),by=lma.name]
+  # d@data[is.na(ID_PiecesLMA),ID_PiecesLMA:=as.character(LMA)]
   
+  d1=data.table(d)
+  d1[,x:=.N,by=lma.name]
+  d1[x>=2,ID_PiecesLMA:=paste(as.character(LMA),1:max(x),sep="_"),by=lma.name]
+  d1[is.na(ID_PiecesLMA),ID_PiecesLMA:=as.character(LMA)]
+  d$x=NULL
+  d1[,x:=.N,by=lma.name]
+  d=merge(d,d1)
   
-  d@data=data.table(d@data)
-  d@data[,x:=.N,by=lma.name]
-  d@data[x>=2,ID_PiecesLMA:=paste(as.character(LMA),1:max(x),sep="_"),by=lma.name]
-  d@data[is.na(ID_PiecesLMA),ID_PiecesLMA:=as.character(LMA)]
-  
-  
-  
-  sll.shp.nb <- spdep::poly2nb(d, row.names =d@data$ID_PiecesLMA,queen=TRUE)
+  #QUI INTERVENIRE
+  sll.shp.nb <- spdep::poly2nb(d, row.names =d$ID_PiecesLMA,queen=TRUE)
   
   W=spdep::nb2mat(sll.shp.nb,style="B", zero.policy=TRUE)
+  
+  
+  
   rownames(W[rowSums(W)==0,])
-  colnames(W)=d@data$ID_PiecesLMA
+  colnames(W)=d$ID_PiecesLMA
+  rownames(W)=d$ID_PiecesLMA
   
-  nolinkpolig=d@data$ID_PiecesLMA[d@data$ID_PiecesLMA%in%rownames(W)[rowSums(W)==0]]
-  nolinkpoligname=d@data$lma.name[d@data$ID_PiecesLMA%in%rownames(W)[rowSums(W)==0]]
+  nolinkpolig=d$ID_PiecesLMA[d$ID_PiecesLMA%in%rownames(W)[rowSums(W)==0]]
+  nolinkpoligname=d$lma.name[d$ID_PiecesLMA%in%rownames(W)[rowSums(W)==0]]
   
   
-  badlmalist=sort(unique(d@data$LMA[d@data$x>1]))
+  badlmalist=sort(unique(d$LMA[d$x>1]))
   zeris=c(0,0)
   df.mun.poly=data.frame(t(zeris))
   colnames(df.mun.poly)=c("community","Polygon")
   rm(zeris)
   
   
-  indice.ident=grep(id_com,names(comuni91@data))
+  indice.ident=grep(id_com,names(comuni91))
   for(badlma in badlmalist){
     dev.new(noRStudioGD = TRUE)
     par(mfrow=c(1,2))
     zz=d[d$LMA==badlma,]
-    plot(zz,main=paste("polygons",unique(zz@data$lma.name),sep=" "),col=c("yellow","red","cyan","orange"),col.main="red")
-    centroids <- coordinates(zz)
-    text(centroids, label=zz@data$ID_PiecesLMA,
-         cex = 0.8)
+    plot(sf::st_geometry(zz),main=paste("polygons",unique(zz$lma.name),sep=" "),col=c("yellow","red","cyan","orange"),col.main="red")
+    centroids <- st_centroid(zz)
+    text(st_coordinates(centroids), label=zz$ID_PiecesLMA,
+         cex = 0.8,col="black")
     
-    plot(comuni91[comuni91$LMA==badlma,],main=paste("communities",unique(zz@data$lma.name),sep=" "))
-    centroids <- coordinates(comuni91[comuni91$LMA==badlma,])
-    text(centroids, label=comuni91[comuni91$LMA==badlma,]@data[,indice.ident],     
+    plot(sf::st_geometry(comuni91[comuni91$LMA==badlma,]),main=paste("communities",unique(zz$lma.name),sep=" "))
+    centroids <- st_centroid(comuni91[comuni91$LMA==badlma,])
+    text(st_coordinates(centroids), label=unlist(st_drop_geometry(comuni91[comuni91$LMA==badlma,indice.ident])),     
          cex = 0.8)
     
     par(mfrow=c(1,1))
-    if((max(zz@data$x)-1)>0){
-    for(kiki in 1:(max(zz@data$x)-1)){
+    if((max(zz$x)-1)>0){
+    for(kiki in 1:(max(zz$x)-1)){
       mimi=readline(paste("LMA ID ",badlma ," please type com ID:     ",sep=""))
       
       cici=readline(paste("LMA ID ",badlma ," please type polygon label:     ",sep=""))
@@ -1528,7 +1712,8 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
       }
     dev.off()
   }
-  df.mun.poly=df.mun.poly[-1,]
+  df.mun.poly=data.table(df.mun.poly[-1,])
+  df.mun.poly=df.mun.poly[!is.na(community) & community!=""]
   dim(df.mun.poly)
   df.mun.poly=df.mun.poly[(df.mun.poly$community!="" & df.mun.poly$Polygon!=""),]
   dim(df.mun.poly)
@@ -1543,7 +1728,7 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
   }
   df.mun.poly=df.mun.poly[(df.mun.poly$community!="" & df.mun.poly$Polygon!=""),]
   
-  df.mun.poly=merge(df.mun.poly,lma$clusterList[,list(community,LMA,EMP_live)],by="community")
+  df.mun.poly=merge(df.mun.poly[,.(community=as.character(community),Polygon)],lma$clusterList[,list(community=as.character(community),LMA,EMP_live)],by="community")
   setDT(df.mun.poly)
   setorder(df.mun.poly,-EMP_live)
   
@@ -1582,7 +1767,6 @@ FindIsolated=function(lma,lma_shp=NULL,lma_shp_path=NULL,lma_shp_name=NULL,
                      poly.com.linkage=data.table(df.mun.poly),
                      poly.nolink=data.table(poly.nolink.ID,poly.nolink.name))
   
-  iso=data.table()
   return(list(isolated.lma=isolated.lma,isolated.poly=isolated.poly))
   
 }
@@ -1599,7 +1783,11 @@ FindContig=function(type="poly",lma,contig.matrix,isolated){
     i=1
     for(sgd in isolated$Polygon){
       if(!is.na(match("temp",ls()))){rm(temp)}
-      temp=names(which(contig.matrix[as.character(sgd),]==1))
+      
+      row.index=which(rownames(contig.matrix)==as.character(sgd))
+      temp=names(which(contig.matrix[row.index,]==1))
+      # OLD VERSION temp=names(which(contig.matrix[as.character(sgd),]==1))
+      
       lista.contigui.poly[[i]]=temp
       names(lista.contigui.poly)[i]=sgd
       i=i+1
@@ -1630,18 +1818,23 @@ FindContig=function(type="poly",lma,contig.matrix,isolated){
     i=1
     for(sgd in isolated){
       if(!is.na(match("temp",ls()))){rm(temp)}
-      temp=names(which(contig.matrix[as.character(sgd),]==1))
+      row.index=which(rownames(contig.matrix)==as.character(sgd))
+      temp=names(which(contig.matrix[row.index,]==1))
+      if(!is.null(temp)){
+        lista.contigui.sll1[[i]]=temp
+        names(lista.contigui.sll1)[i]=sgd
+        i=i+1
+      }
       
-      lista.contigui.sll1[[i]]=temp
-      names(lista.contigui.sll1)[i]=sgd
-      i=i+1
     }
     
     cici=merge(data.frame(isolated),data.frame(lma$clusterList),by.x="isolated",
                by.y="LMA")
     setDT(cici)
     setorder(cici,-EMP_live)
-    names(lista.contigui.sll1)=cici$community
+    
+    if(length(lista.contigui.sll1)>0){names(lista.contigui.sll1)=cici$community}
+    
     
     out=list(list.contig.lma=lista.contigui.sll1)
     
@@ -1650,6 +1843,65 @@ FindContig=function(type="poly",lma,contig.matrix,isolated){
   return(out)
 }
 
+
+DeleteLmaName=function(lma){
+  
+  clusterData=copyClusterData(lma)
+  
+  clusterData$clusterList[,com.name:=NULL]
+  clusterData$clusterList[,lma.name:=NULL]
+  
+  clusterData$marginals[,lma.name:=NULL]
+  
+  clusterData$LWClus[,lma.name.live:=NULL]
+  clusterData$LWClus[,lma.name.work:=NULL]
+  
+  if(length(grep("LMA",names(clusterData$clusterList)))>0){
+    setnames(clusterData$clusterList,"LMA","cluster")
+  }
+  
+  if(length(grep("EMP_live",names(clusterData$clusterList)))>0){
+    setnames(clusterData$clusterList,"EMP_live","residents")
+  }
+  
+  
+  if(length(grep("LMA_live",names(clusterData$LWClus)))>0){
+    setnames(clusterData$LWClus,"LMA_live","cluster_live")
+  }
+  
+  if(length(grep("LMA_work",names(clusterData$LWClus)))>0){
+    setnames(clusterData$LWClus,"LMA_work","cluster_work")
+  }
+  
+  if(length(grep("commuters",names(clusterData$LWClus)))>0){
+    setnames(clusterData$LWClus,"commuters","amount")
+  }
+  
+  
+  if(length(grep("LMA",names(clusterData$marginals)))>0){
+    setnames(clusterData$marginals,"LMA","cluster")
+  }
+  
+  if(length(grep("EMP_live",names(clusterData$marginals)))>0){
+    setnames(clusterData$marginals,"EMP_live","amount_live")
+  }
+  
+  if(length(grep("EMP_work",names(clusterData$marginals)))>0){
+    setnames(clusterData$marginals,"EMP_work","amount_work")
+  }
+  
+  
+  return(clusterData)
+}
+
+
+copyClusterData=function(lma){
+  out=list()
+  out$clusterList=copy(data.table(lma$clusterList))
+  out$LWClus=copy(data.table(lma$LWClus))
+  out$marginals=copy(data.table(lma$marginals))
+  return(out)
+}
 
 
 
@@ -1763,6 +2015,7 @@ FineTuning=function(dat,out.ini,list.contiguity){
 
 
 StatReserveList=function(reserve.list,dat){
+  if(length(reserve.list)>0){
   setDT(dat)
   setcolorder(dat,c("community_live","community_work","amount"))
   ExtractComp=function(vec,n){vec[n]}
@@ -1802,10 +2055,13 @@ StatReserveList=function(reserve.list,dat){
            ,Workers=Workers.Com
            ,summaryWorkersByCom=SummWorkersByCom
   )
+  #end if length>0
+  }
+  if(length(reserve.list)==0){ out=list()}
+  
   return(out)
   
 }
-
 
 
 StatClusterData=function(lma,param,threshold,dat){
@@ -1989,64 +2245,6 @@ StatClusterData=function(lma,param,threshold,dat){
   return(out)
 }
 
-DeleteLmaName=function(lma){
-  
-  clusterData=copyClusterData(lma)
-  
-  clusterData$clusterList[,com.name:=NULL]
-  clusterData$clusterList[,lma.name:=NULL]
-  
-  clusterData$marginals[,lma.name:=NULL]
-  
-  clusterData$LWClus[,lma.name.live:=NULL]
-  clusterData$LWClus[,lma.name.work:=NULL]
-  
-  if(length(grep("LMA",names(clusterData$clusterList)))>0){
-    setnames(clusterData$clusterList,"LMA","cluster")
-  }
-  
-  if(length(grep("EMP_live",names(clusterData$clusterList)))>0){
-    setnames(clusterData$clusterList,"EMP_live","residents")
-  }
-  
-  
-  if(length(grep("LMA_live",names(clusterData$LWClus)))>0){
-    setnames(clusterData$LWClus,"LMA_live","cluster_live")
-  }
-  
-  if(length(grep("LMA_work",names(clusterData$LWClus)))>0){
-    setnames(clusterData$LWClus,"LMA_work","cluster_work")
-  }
-  
-  if(length(grep("commuters",names(clusterData$LWClus)))>0){
-    setnames(clusterData$LWClus,"commuters","amount")
-  }
-  
-  
-  if(length(grep("LMA",names(clusterData$marginals)))>0){
-    setnames(clusterData$marginals,"LMA","cluster")
-  }
-  
-  if(length(grep("EMP_live",names(clusterData$marginals)))>0){
-    setnames(clusterData$marginals,"EMP_live","amount_live")
-  }
-  
-    if(length(grep("EMP_work",names(clusterData$marginals)))>0){
-    setnames(clusterData$marginals,"EMP_work","amount_work")
-  }
-  
-  
-  return(clusterData)
-}
-
-copyClusterData=function(lma){
-  out=list()
-  out$clusterList=copy(data.table(lma$clusterList))
-  out$LWClus=copy(data.table(lma$LWClus))
-  out$marginals=copy(data.table(lma$marginals))
-  return(out)
-}
-
 
 BindPiecesLma=function(input1,input2,LWCom){
   setDT(LWCom)
@@ -2159,9 +2357,17 @@ PlotLmaCommunity=function(list.lma,lmaIDs,communityID,
                           bmpfile,col.vec=c("red","orange","yellow")){
   
   if(!is.null(shp_com)){
-    if(is.na(shp_com@proj4string@projargs)){
-      stop("ERROR: please provide a shape file containing a valid proj4string.")
+    # if(is.na(shp_com@proj4string@projargs)){
+    #   stop("ERROR: please provide a shape file containing a valid proj4string.")
+    # }
+    
+    #daniela 22 febb 2023 aggiunta la riga sotto per creare oggetto di tipo sf
+    if(any(class(shp_com)=="SpatialPolygonsDataFrame")){shp_com=sf::st_as_sf(shp_com)}
+    if(any(class(shp_com)=="sf")){shp_com=shp_com}
+    if(length(intersect(class(shp_com),c("sf","SpatialPolygonsDataFrame")))==0){
+      stop("ERROR: please provide a shape file that is an object of class sf or, only for older versions of the LabourMarketAreas package, a SpatialPolygonsDataFrame. Please consider updates.")
     }
+    
   }
   
   bmp(paste(bmpfile,".bmp",sep=""),width=1200,height=1200)
@@ -2172,7 +2378,7 @@ PlotLmaCommunity=function(list.lma,lmaIDs,communityID,
   
   
   
-  x=CreateLMAShape(lma,comIDs="community"
+  x=CreateLMAshape(lma,comIDs="community"
                    ,lmaIDs=lmaIDs
                    ,shp_com=shp_com
                    ,dsn=NULL
@@ -2195,17 +2401,28 @@ PlotLmaCommunity=function(list.lma,lmaIDs,communityID,
   
   new.com=setdiff(com.in.current.lma,com.in.current.lma2)
   
-  indicecom=grep(id_shp,names(shp_com@data))
+  #daniela 22febb2023 sf
+  # indicecom=grep(id_shp,names(shp_com@data))
+  indicecom=grep(id_shp,names(shp_com))
   indicelma=grep(lmaIDs,names(x$shp_lma))
   
   
+  #daniela 22febb2023 sf
+  # plot(shp_com[shp_com@data[,indicecom]%in%com.in.current.lma,],border="gray", main=counter)
+  # plot(x$shp_lma[x$shp_lma@data[,indicelma]%in%current.lma,],border="red",add=T)
+  # plot(shp_com[shp_com@data[,indicecom]%in%communityID,],border="gray",col=col.vec[1],add=T)
   
-  plot(shp_com[shp_com@data[,indicecom]%in%com.in.current.lma,],border="gray", main=counter)
-  plot(x$shp_lma[x$shp_lma@data[,indicelma]%in%current.lma,],border="red",add=T)
-  plot(shp_com[shp_com@data[,indicecom]%in%communityID,],border="gray",col=col.vec[1],add=T)
+  ##check se si fa la selezione in questo modo
+  
+  plot(st_geometry(shp_com[unlist(st_drop_geometry(shp_com[,indicecom]))%in%com.in.current.lma,]),border="gray", main=counter)
+  plot(st_geometry(x$shp_lma[unlist(st_drop_geometry(x$shp_lma)[,indicelma])%in%current.lma,]),border="red",add=T)
+  plot(st_geometry(shp_com[unlist(st_drop_geometry(shp_com[,indicecom]))%in%communityID,]),border="gray",col=col.vec[1],add=T)
   
   if(length(new.com)>0){
-    plot(shp_com[shp_com@data[,indicecom]%in%new.com,],border="gray",col=col.vec[2],add=T)
+    #daniela 22febb2023
+    # plot(shp_com[shp_com@data[,indicecom]%in%new.com,],border="gray",col=col.vec[2],add=T)
+    #check se si fa la selezione in questo modo
+    plot(st_geometry(shp_com[unlist(st_drop_geometry(shp_com[,indicecom]))%in%new.com,]),border="gray",col=col.vec[2],add=T)
   }
   
   
@@ -2215,7 +2432,7 @@ PlotLmaCommunity=function(list.lma,lmaIDs,communityID,
   
  
   
-  x=CreateLMAShape(lma,comIDs="community"
+  x=CreateLMAshape(lma,comIDs="community"
                    ,lmaIDs=lmaIDs
                    ,shp_com=shp_com
                    ,dsn=NULL
@@ -2236,18 +2453,27 @@ PlotLmaCommunity=function(list.lma,lmaIDs,communityID,
   
   new.com=setdiff(com.in.current.lma,com.in.current.lma1)
   
-  indicecom=grep(id_shp,names(shp_com@data))
+  #daniela 22febb2023
+  # indicecom=grep(id_shp,names(shp_com@data))
+  indicecom=grep(id_shp,names(shp_com))
   indicelma=grep(lmaIDs,names(x$shp_lma))
   
   
-  
-  plot(shp_com[shp_com@data[,indicecom]%in%com.in.current.lma,],border="gray", main=counter)
-  plot(x$shp_lma[x$shp_lma@data[,indicelma]%in%current.lma,],border="red",add=T)
-  plot(shp_com[shp_com@data[,indicecom]%in%communityID,],border="gray",col=col.vec[1],add=T)
+  #daniela 22febb2023 sf
+  # plot(shp_com[shp_com@data[,indicecom]%in%com.in.current.lma,],border="gray", main=counter)
+  # plot(x$shp_lma[x$shp_lma@data[,indicelma]%in%current.lma,],border="red",add=T)
+  # plot(shp_com[shp_com@data[,indicecom]%in%communityID,],border="gray",col=col.vec[1],add=T)
+  plot(st_geometry(shp_com[unlist(st_drop_geometry(shp_com[,indicecom]))%in%com.in.current.lma,]),border="gray", main=counter)
+  plot(st_geometry(x$shp_lma[unlist(st_drop_geometry(x$shp_lma)[,indicelma])%in%current.lma,]),border="red",add=T)
+  plot(st_geometry(shp_com[unlist(st_drop_geometry(shp_com[,indicecom]))%in%communityID,]),border="gray",col=col.vec[1],add=T)
   
   if(length(new.com)>0){
-    plot(shp_com[shp_com@data[,indicecom]%in%new.com,],border="gray",col=col.vec[3],add=T)
-  }
+    #daniela 22febb2023
+    # plot(shp_com[shp_com@data[,indicecom]%in%new.com,],border="gray",col=col.vec[3],add=T)
+    #check se si fa la selezione in questo modo
+    plot(st_geometry(shp_com[unlist(st_drop_geometry(shp_com[,indicecom]))%in%new.com,]),border="gray",col=col.vec[2],add=T)
+    
+    }
   
   
   dev.off()
@@ -2264,65 +2490,6 @@ PlotLmaCommunity=function(list.lma,lmaIDs,communityID,
   
 }
 
-CreateClusterData=function(LWCom,residents=NULL){
-  setDT(LWCom)
-  setcolorder(LWCom,c("community_work","community_live","amount"))
-  
-  LIST.COM=data.table(c(LWCom[,community_live],LWCom[,community_work]))
-  LIST.COM=unique(LIST.COM)[order(V1)]
-  
-  if(is.null(residents)){
-    residents=setcolorder(LWCom[,list(residents=sum(amount)),by=list(Code=community_live)],c("residents","Code"))
-    residents=merge(residents,LIST.COM,by.x="Code",by.y="V1",all=T)
-    residents[is.na(residents),residents:=0]
-  }
-  
-  
-  communitiesList <- unique(c(LWCom[,community_live], LWCom[,community_work]))
-  
-  clusterList <- 1:length(communitiesList)
-  
-  result <- data.table(community = communitiesList, cluster = clusterList)
-  
-  clusterList     <- merge(result, residents, by.x = "community", by.y = "Code")
-  
-  rm(result)
-  
-  names(LWCom)[grep("_live",names(LWCom))][1]="community_live"
-  names(LWCom)[grep("_work",names(LWCom))][1]="community_work"
-  
-  LWClus <- merge(LWCom, data.table(clusterList), by.x = "community_live", by.y = "community",all=T)
-  LWClus <- merge(LWClus, data.table(clusterList), by.x = "community_work", by.y = "community", suffixes = c("_live", "_work"),all=T)
-  
-  out<-LWClus[, list(amount=sum(amount)),by=list(cluster_live,cluster_work)]
-  out[is.na(amount),amount:=0]
-  
-  out[,col:=(is.na(cluster_live) & is.na(cluster_work) & amount==0)]
-  out=out[!(col)]
-  out[,col:=NULL]
-  
-  LWClus <- out
-  rm(out)
-  
-  
-  
-  
-  liveMarginal <- LWClus[, list(amount=sum(amount)), by = list(cluster=cluster_live)]
-  workMarginal <- LWClus[, list(amount=sum(amount)), by = list(cluster=cluster_work)]
-  
-  marginals <- merge(liveMarginal, workMarginal, by="cluster",suffixes = c("_live", "_work"), all=TRUE)
-  
-  rm(liveMarginal)
-  rm(workMarginal)
-  
-  
-  
-  
-  clusterData <- list(clusterList = clusterList, LWClus = LWClus, marginals = marginals)
-  
-  return(clusterData)
-  
-}
 
 Qmodularity<-function(lma)
 {
@@ -2400,6 +2567,7 @@ CompareLMAsStat=function(list.lma,dat){
 }
 
 AddStatistics=function(statData,comID.file,lma,comID.lma){
+  if(any(class(statData)=="sf")){statData=st_drop_geometry(statData)}
   setDT(statData)
   Y=copy(lma$clusterList)
   Y[,residents:=NULL]
@@ -2410,88 +2578,148 @@ AddStatistics=function(statData,comID.file,lma,comID.lma){
   return(x)
 }
 
-LmaSpatialComparison=function(shape,shape_ref){
-  
-  
-  if(!inherits(shape,"SpatialPolygonsDataFrame")){stop("shape must be a spatial object. It must be the output of the LMA creation process.")}
-  if(!inherits(shape_ref,"SpatialPolygonsDataFrame")){stop("shape_ref must be a spatial object.It must be the output of the LMA creation process.")}
-  
-FindMaxIntersection=function(single_shp,many_shp){
+LmaSpatialComparison=function(shape,shape_ref,lma.id="LMA"){
+
+
+  #daniela 22 febb 2023 aggiunta la riga sotto per creare oggetto di tipo sf
+  if(any(class(shape)=="SpatialPolygonsDataFrame")){shape=sf::st_as_sf(shape)}
+  if(any(class(shape)=="sf")){shape=shape}
+  if(length(intersect(class(shape),c("sf","SpatialPolygonsDataFrame")))==0){
+    stop("ERROR: please provide a shape file that is an object of class sf or, only for older versions of the LabourMarketAreas package, a SpatialPolygonsDataFrame. Please consider updates.")
+  }
+
+  #daniela 22 febb 2023 aggiunta la riga sotto per creare oggetto di tipo sf
+  if(any(class(shape_ref)=="SpatialPolygonsDataFrame")){shape_ref=sf::st_as_sf(shape_ref)}
+  if(any(class(shape_ref)=="sf")){shape_ref=shape_ref}
+  if(length(intersect(class(shape_ref),c("sf","SpatialPolygonsDataFrame")))==0){
+    stop("ERROR: please provide a shape file that is an object of class sf or, only for older versions of the LabourMarketAreas package, a SpatialPolygonsDataFrame. Please consider updates.")
+  }
+
+  shape=st_make_valid(shape)
+  shape_ref=st_make_valid(shape_ref)
+
+FindMaxIntersection=function(single_shp,many_shp,lma.id=lma.id){
   selected_output=NULL
   y=NULL
-  x=NULL
-  x=try(gIntersection(single_shp,many_shp,byid=T,id=as.character(many_shp@data$LMA),drop_lower_td =T))
-  if(inherits(x,"SpatialPolygons")){
-  if(!is.null(x)){
-    y=gArea(x,byid=T)
-    selected_output=as.numeric(as.character(names(y)[y==max(y)][1]))
-    #end if is null x 
+  xx=NULL
+
+  ##QUI INTERVENIRE
+  xx=try(sf::st_intersection(single_shp,many_shp ))
+  if(any(class(xx)=="sf")){
+  if(!is.null(xx)){
+    #daniela 22febb2023
+    #y=gArea(x,byid=T)
+    y=sf::st_area(xx)
+    selected_output=st_drop_geometry(xx)[y==max(y),]
+    selected_output=st_drop_geometry(selected_output)[,names(selected_output)==paste(lma.id,".1",sep="")]
+    #end if is null xx
   }
-  
+
   if(is.null(selected_output) | is.null(y)){
     return(list(selected_output=-1,area_intersection_max=-1,perc_intersection_shapi=-1,perc_intersection_lma=-1))
     }
   if(!is.null(selected_output) & !is.null(y)){
-    return(list(selected_output=selected_output,area_intersection_max=max(y),perc_intersection_shapi=max(y)/sum(y),perc_intersection_lma=max(y)/gArea(many_shp[many_shp@data$LMA==selected_output,])))
+    #daniela 22febb2023 sf
+    #QUI INTERVENIRE GAREA
+    # return(list(selected_output=selected_output,area_intersection_max=max(y),perc_intersection_shapi=max(y)/sum(y),perc_intersection_lma=max(y)/gArea(many_shp[many_shp@data$LMA==selected_output,])))
+    return(list(selected_output=selected_output,area_intersection_max=as.numeric(max(y)),perc_intersection_shapi=as.numeric(max(y))/as.numeric(sum(y))*100,perc_intersection_lma=as.numeric(max(y))/as.numeric(sf::st_area(many_shp[st_drop_geometry(many_shp)[,names(many_shp)==lma.id]==selected_output,]))*100))
   }
-   
-    #end class x polygon
+
+    #end class xx polygon
   }
-  
-  if(inherits(x,"try-error")){
+
+  if(inherits(xx,"try-error")){
     return(list(selected_output=-1,area_intersection_max=-1,perc_intersection_shapi=-1,perc_intersection_lma=-1))
   }
   #end function
 }
 
-
-
   rm(shapi);rm(shapi_good)
-  shapi=spTransform(shape,proj4string(shape_ref))
-  shapi_good=shapi
-  
-  
-  shapi_good@data=data.table(shapi_good@data)
-  area=gArea(shapi_good,byid=T)
-  shapi_good@data$area_shapi=area
-  
-  shape_ref@data=data.table(shape_ref@data)
-  area=gArea(shape_ref,byid=T)
-  shape_ref@data$area_lma_com=area
 
-  
-  stats=rep(0,11)
-  
-  indice=1:nrow(shapi_good@data)
+  #daniela 22febb2023 use sf
+  #shapi=spTransform(shape,proj4string(shape_ref))
+  shapi=sf::st_transform(shape,sf::st_crs(shape_ref))
+  shapi_good=shapi
+
+  #daniela 22febb2023
+  # shapi_good@data=data.table(shapi_good@data)
+  #area=gArea(shapi_good,byid=T)
+
+  area=sf::st_area(shapi_good)
+  shapi_good$area_shapi=area
+
+  ###QUI INTERVENIRE GAREA
+  #shape_ref=data.table(shape_ref@data)
+  #area=gArea(shape_ref,byid=T)
+  area=sf::st_area(shape_ref)
+  shape_ref$area_lma_com=area
+
+
+  stats=c(0,11)
+
+  #daniela 22febb2023 sf
+  #indice=1:nrow(shapi_good@data)
+  indice=1:nrow(shapi_good)
   for(i in indice){
     #print(i)
-    nome_shapi=shapi_good@data$LMA[i]
-    corrisp=FindMaxIntersection(shapi_good[i,],shape_ref)
-    
+
+    #daniela 22febb2023 sf
+    # nome_shapi=shapi_good@data$LMA[i]
+    # corrisp=FindMaxIntersection(shapi_good[i,],shape_ref)
+    #
+    # stats=rbind(stats,c(nome_shapi
+    #                     ,as.character(shape_ref@data$LMA[shape_ref@data$LMA==corrisp$selected_output])
+    #                     ,corrisp$area_intersection
+    #                     ,as.numeric(as.character(shapi_good@data$area[i]))
+    #                     ,as.numeric(as.character(shape_ref@data$area_lma_com[shape_ref@data$LMA==corrisp$selected_output]))
+    #                     ,as.numeric(as.character(shapi_good@data$EMP_live[i]))
+    #                     ,as.numeric(as.character(shapi_good@data$EMP_work[i]))
+    #                     ,as.numeric(as.character(shape_ref@data$EMP_live[shape_ref@data$LMA==corrisp$selected_output]))
+    #                     ,as.numeric(as.character(shape_ref@data$EMP_work[shape_ref@data$LMA==corrisp$selected_output]))
+    #                     ,corrisp$perc_intersection_shapi
+    #                     ,corrisp$perc_intersection_lma)
+    # )
+
+    nome_shapi=st_drop_geometry(shapi_good)[i,names(shapi_good)==lma.id]
+    corrisp=FindMaxIntersection(shapi_good[i,],shape_ref,lma.id=lma.id)
+
     stats=rbind(stats,c(nome_shapi
-                        ,as.character(shape_ref@data$LMA[shape_ref@data$LMA==corrisp$selected_output])
+                        ,as.character(shape_ref$LMA[st_drop_geometry(shape_ref)[,names(shape_ref)==lma.id]==corrisp$selected_output])
                         ,corrisp$area_intersection
-                        ,as.numeric(as.character(shapi_good@data$area[i]))
-                        ,as.numeric(as.character(shape_ref@data$area_lma_com[shape_ref@data$LMA==corrisp$selected_output]))
-                        ,as.numeric(as.character(shapi_good@data$EMP_live[i]))
-                        ,as.numeric(as.character(shapi_good@data$EMP_work[i]))
-                        ,as.numeric(as.character(shape_ref@data$EMP_live[shape_ref@data$LMA==corrisp$selected_output]))
-                        ,as.numeric(as.character(shape_ref@data$EMP_work[shape_ref@data$LMA==corrisp$selected_output]))
+                        ,as.numeric(shapi_good$area[i])
+                        ,as.numeric(shape_ref$area_lma_com[st_drop_geometry(shape_ref)[,names(shape_ref)==lma.id]==corrisp$selected_output])
+                        ,as.numeric(shapi_good$EMP_live[i])
+                        ,as.numeric(shapi_good$EMP_work[i])
+                        ,as.numeric( shape_ref$EMP_live[st_drop_geometry(shape_ref)[,names(shape_ref)==lma.id]==corrisp$selected_output])
+                        ,as.numeric(shape_ref$EMP_work[st_drop_geometry(shape_ref)[,names(shape_ref)==lma.id]==corrisp$selected_output])
                         ,corrisp$perc_intersection_shapi
                         ,corrisp$perc_intersection_lma)
     )
+
   }
-  
-  stats=data.table(stats[-1,])
+
+  stats=stats[-1,]
+  stats=data.table(stats)
   #stats[,shape_ref_ID:=NULL]
+  if(nrow(stats)>0){  
   setnames(stats,c("shape_lma","shape_ref_lma","area_intersection"
                    ,"shape_area","shape_ref_area",
                    "shape_EMP_live","shape_EMP_work"
                    ,"shape_ref_EMP_live","shape_ref_EMP_work"
                    ,"perc_intersection_shape","perc_intersection_shape_ref"))
-  
- 
-  return(stats)
+  }
+
+
+    stats[,area_intersection:=as.numeric(as.character(area_intersection))]
+    stats[,shape_area:=as.numeric(as.character(shape_area))]
+    stats[,shape_ref_area:=as.numeric(as.character(shape_ref_area))]
+    stats[,shape_EMP_live:=as.numeric(as.character(shape_EMP_live))]
+    stats[,shape_EMP_work:=as.numeric(as.character(shape_EMP_work))]
+    stats[,shape_ref_EMP_live:=as.numeric(as.character(shape_ref_EMP_live))]
+    stats[,shape_ref_EMP_work:=as.numeric(as.character(shape_ref_EMP_work))]
+    stats[,perc_intersection_shape:=as.numeric(as.character(perc_intersection_shape))]
+    stats[,perc_intersection_shape_ref:=as.numeric(as.character(perc_intersection_shape_ref))]
+
+    return(stats)
   #end function LmaSpatialComparison
 }
-  

@@ -23,7 +23,7 @@ data table containing the main characteristics of the current set of clusters.
 The cohesion matrix between clusters.
 }
 \author{
-Daniela Ichim, Luisa Franconi, Michele D'Alo' and Guido van den Heuvel
+Daniela Ichim, Luisa Franconi, Michele D'Alo', Guido van den Heuvel
 }
 \note{
 This function is called and used internally by the main function findClusters

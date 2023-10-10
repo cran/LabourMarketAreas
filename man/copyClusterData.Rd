@@ -20,7 +20,7 @@ list of three data.tables: clusterList, LWClus and marginals. See function findC
 list of three. It contains the three data tables clusterList, LWClus, marginals. They are copies of the input data.tables.
 }
 \author{
-Daniela Ichim, Luisa Franconi and Michele D'Alo' 
+Daniela Ichim, Luisa Franconi
 }
 \seealso{
 findClusters
